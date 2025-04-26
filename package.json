@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@elvishscout/mdstory": "^0.1.0",
+    "brotli-wasm": "^3.0.1",
     "tailwindcss": "^4.1.4",
     "vite-plugin-singlefile": "^2.2.0"
   }
