@@ -48,4 +48,27 @@ export const createPreview = async (root: HTMLElement) => {
   frame.title = "preview";
   frame.src = dataUrl;
   root.append(frame);
+
+  frame.onload = () => {
+    frame.contentWindow!.addEventListener("error", (ev) => {
+      console.error(ev.error);
+    });
+
+    const frameTitle = frame.contentDocument!.head.querySelector("title");
+    const frameIcon = frame.contentDocument!.head.querySelector<HTMLLinkElement>("link[rel=icon]");
+
+    if (frameTitle) {
+      document.title = frameTitle.innerText;
+      new MutationObserver(() => {
+        document.title = frameTitle.innerText;
+      }).observe(frameTitle, { childList: true });
+    }
+    if (frameIcon) {
+      const icon = document.head.querySelector<HTMLLinkElement>("link[rel=icon]")!;
+      icon.href = frameIcon.href;
+      new MutationObserver(() => {
+        icon.href = frameIcon.href;
+      }).observe(frameIcon, { attributes: true });
+    }
+  };
 };

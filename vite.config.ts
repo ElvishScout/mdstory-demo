@@ -32,6 +32,15 @@ const pluginStrictRoute = (): PluginOption => {
           return;
         }
 
+        if (relativePath === "template.html") {
+          try {
+            const template = await fs.readFile(path.resolve(__dirname, "dist/template.html"));
+            res.writeHead(200, { "content-type": "text/html" });
+            res.end(template);
+            return;
+          } catch {}
+        }
+
         res.writeHead(404, "file not found");
         res.end();
       });
