@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+.fc-input {
+  @apply relative;
+}
+
+.fc-input-text {
+  @apply relative w-fit whitespace-pre;
+}
+
+.fc-input-text,
+.fc-input-text * {
+  @apply cursor-text;
+}
+
+.fc-input-text input {
+  @apply absolute left-0 right-0 text-center;
+}
+
+.fc-input-text .placeholder {
+  @apply inline-block min-w-16 max-w-64 invisible;
+}
+
+.fc-input-checkbox {
+  @apply -my-1 p-1;
+}
+
+.fc-input-checkbox,
+.fc-input-checkbox * {
+  @apply cursor-pointer;
+}
+
+.fc-input-checkbox input {
+  @apply absolute inset-0 z-10 opacity-0;
+}
+
+.fc-input-checkbox .circle {
+  @apply relative inline-block -top-0.5 w-4 h-4 align-middle;
+}
+
+.fc-input-checkbox .checkmark {
+  @apply absolute left-[10%] top-[-35%] w-[140%] h-[140%] bg-none;
+}
+
+.fc-input-checkbox:has(input:checked) .checkmark {
+  @apply bg-contain;
+}
