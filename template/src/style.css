@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+* {
+  @apply outline-none;
+}
+
+:root {
+  @apply font-serif bg-white selection:bg-amber-100;
+}
+
+body {
+  @apply overflow-auto;
+}
+
+#root {
+  @apply px-2 md:px-12 py-4 md:py-8 md:text-lg;
+  scrollbar-gutter: stable both-edges;
+}
+
+.story-heading {
+  @apply mb-4 text-3xl text-center;
+}
+
+.chapter {
+  @apply relative mt-8 px-2 pb-8 last:pb-[25vh] first:mt-0 border-b-2 border-red-700 last:border-none overflow-hidden;
+}
+
+.chapter.finished {
+  @apply opacity-40;
+}
+
+.chapter .chapter-cover {
+  @apply absolute left-0 right-0 top-[100%] h-[200%] bg-linear-[to_bottom,transparent_0%,#ffffff_50%,#ffffff_100%] z-10;
+}
+
+.chapter h1 {
+  @apply my-2 text-2xl;
+}
+
+.chapter p {
+  @apply my-2;
+}
+
+.chapter .fc-input-text {
+  @apply px-2 py-0.5 border-b-2 border-red-700;
+}
+
+.chapter .fc-input-text:has(input[disabled]) {
+  @apply bg-red-100;
+}
+
+.chapter .fc-input-checkbox .circle {
+  @apply border-2 border-red-700 rounded-full;
+}
+
+.chapter .fc-input-checkbox:has(input[disabled]) .circle {
+  @apply bg-red-100;
+}
+
+.chapter button[type="submit"] {
+  @apply px-1 text-red-600 hover:text-red-400 active:text-red-300 underline cursor-pointer;
+}
+
+.chapter button[type="submit"]:disabled {
+  @apply text-red-600;
+}
+
+.viewer-cover {
+  @apply fixed inset-0 flex flex-col justify-center items-center text-4xl leading-0 select-none backdrop-blur-xs z-10;
+}
+
+.viewer-cover::after {
+  @apply content-[""] h-16;
+}

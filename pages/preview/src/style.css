@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+* {
+  @apply outline-none;
+}
+
+:root {
+  @apply font-serif bg-white selection:bg-amber-100;
+}
+
+body {
+  @apply overflow-auto;
+}
+
+.preview {
+  @apply w-screen h-screen flex flex-col;
+}
+
+.preview-tools {
+  @apply px-4 py-2 flex justify-center space-x-4 border-b-2 border-red-700;
+}
+
+.preview-tools a {
+  @apply text-red-600 underline cursor-pointer;
+}
+
+.preview-frame {
+  @apply grow;
+}
