@@ -7,8 +7,20 @@
     <title></title>
   </head>
   <body>
-    <template id="content"><pre></pre></template>
-    <div id="root"></div>
+    <div id="root">
+      <template id="content">
+        <pre></pre>
+      </template>
+      <template id="chapter-template">
+        <div class="chapter">
+          <div class="chapter-cover"></div>
+          <form></form>
+        </div>
+      </template>
+      <div class="viewer-cover">Click to start</div>
+      <h1 class="story-heading"></h1>
+      <div class="story-chapters"></div>
+    </div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

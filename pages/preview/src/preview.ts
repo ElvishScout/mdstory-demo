@@ -1,7 +1,28 @@
-const insertContent = (text: string, content: string) => {
+import { parseStoryContent, Asset } from "@elvishscout/mdstory";
+
+const insertContent = async (text: string, content: string, fileAssets: Record<string, File>) => {
+  const assets = Object.fromEntries(
+    await Promise.all(
+      Object.entries(fileAssets).map(async ([alias, file]) => {
+        return new Promise<[string, Asset]>((resolve) => {
+          const fileReader = new FileReader();
+          fileReader.onload = async () => {
+            const url = fileReader.result as string;
+            resolve([alias, { url, mime: file.type }]);
+          };
+          fileReader.readAsDataURL(file);
+        });
+      })
+    )
+  );
+  const storyBody = parseStoryContent(content);
+  storyBody.metadata.assets = { ...storyBody.metadata.assets, ...assets };
+
   const dom = new DOMParser().parseFromString(text, "text/html");
-  const template = dom.querySelector("#content") as HTMLTemplateElement;
-  template.content.querySelector("pre")!.textContent = content;
+  const template = dom.querySelector<HTMLTemplateElement>("#content")!;
+
+  const preContent = template.content.firstElementChild! as HTMLPreElement;
+  preContent.textContent = JSON.stringify(storyBody);
 
   let source = dom.documentElement.outerHTML;
   const { doctype } = dom;
@@ -19,35 +40,22 @@ const insertContent = (text: string, content: string) => {
   return source;
 };
 
-export const createPreview = async (root: HTMLElement) => {
-  document.title = "Preview";
-
+export const createPreview = async (root: HTMLElement, content: string, assets: Record<string, File>) => {
   const response = await fetch("/template.html");
   if (!response.ok) {
     throw "failed to fetch template.html";
   }
   const template = await response.text();
 
-  const content = sessionStorage.getItem("content") ?? "";
-  const srcdoc = insertContent(template, content);
+  const srcdoc = await insertContent(template, content, assets);
   const blob = new Blob([srcdoc], { type: "text/html" });
   const dataUrl = URL.createObjectURL(blob);
 
-  const tools = document.createElement("div");
-  tools.classList.add("preview-tools");
-  root.append(tools);
+  const anchor = root.querySelector<HTMLAnchorElement>("a[download]")!;
+  const frame = root.querySelector<HTMLIFrameElement>("iframe[title=preview]")!;
 
-  const anchor = document.createElement("a");
-  anchor.innerText = "Download Standalone HTML";
-  anchor.download = "download.html";
   anchor.href = dataUrl;
-  tools.append(anchor);
-
-  const frame = document.createElement("iframe");
-  frame.classList.add("preview-frame");
-  frame.title = "preview";
   frame.src = dataUrl;
-  root.append(frame);
 
   frame.onload = () => {
     frame.contentWindow!.addEventListener("error", (ev) => {

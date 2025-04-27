@@ -48,6 +48,25 @@ const pluginStrictRoute = (): PluginOption => {
   };
 };
 
+const pluginFixBrotliWasm = (): PluginOption => {
+  return {
+    name: "vite-plugin-fix-brotli-wasm",
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url?.endsWith("brotli_wasm_bg.wasm")) {
+          const filePath = path.resolve(__dirname, "node_modules/brotli-wasm/pkg.web/brotli_wasm_bg.wasm");
+          const fileContent = await fs.readFile(filePath);
+          res.setHeader("Content-Type", "application/wasm");
+          res.statusCode = 200;
+          res.end(fileContent);
+        } else {
+          next();
+        }
+      });
+    },
+  };
+};
+
 const root = path.resolve(__dirname, "pages");
 const publicDir = path.resolve(__dirname, "public");
 
@@ -57,7 +76,7 @@ export default defineConfig({
       "@": path.resolve(__dirname),
     },
   },
-  plugins: [tailwindcss(), pluginStrictRoute()],
+  plugins: [tailwindcss(), pluginStrictRoute(), pluginFixBrotliWasm()],
   root,
   publicDir,
   build: {

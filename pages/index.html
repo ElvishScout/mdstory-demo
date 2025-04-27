@@ -7,7 +7,51 @@
     <title>MdStory</title>
   </head>
   <body>
-    <div class="editor"></div>
+    <div id="root">
+      <template id="asset-entry">
+        <div class="asset-entry">
+          <input class="asset-alias" type="text" name="asset-alias" />
+          <span class="asset-name"></span>
+          <button class="delete-asset">Delete</button>
+        </div>
+      </template>
+      <h1 class="editor-heading">Source Editor</h1>
+      <div class="editor-main">
+        <div class="editor-assets">
+          <label class="check-label">
+            <input class="check-toggle" type="checkbox" checked />
+            <div class="tools assets-tools">
+              <span>Assets</span>
+              <button type="button" name="button-upload">Upload</button>
+              <input class="upload-assets" type="file" name="input-upload" multiple />
+            </div>
+          </label>
+          <div class="assets-list"></div>
+        </div>
+        <div class="editor-editor">
+          <div class="tools editor-tools">
+            <label>
+              <span>Tab Size:</span>
+              <select name="tab-size">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+              </select>
+            </label>
+            <div class="button-group">
+              <button type="button" name="copy">Copy URL</button>
+              <button type="button" name="preview">Preview</button>
+            </div>
+          </div>
+          <textarea is="fc-editor" name="editor" aria-label="editor"></textarea>
+        </div>
+      </div>
+    </div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

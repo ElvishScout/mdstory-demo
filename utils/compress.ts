@@ -23,18 +23,24 @@ function fromBase64Url(base64Url: string) {
   return Uint8Array.from(Array.from(binaryString, (char) => char.charCodeAt(0)));
 }
 
-export async function compressAndEncode(inputString: string) {
+export async function compressAndEncode(inputBytes: Uint8Array) {
   const brotli = await loadBrotli();
-  const inputBytes = new TextEncoder().encode(inputString);
   const compressed = brotli.compress(inputBytes, { quality: 11 });
-  const base64UrlString = toBase64Url(compressed);
-  return base64UrlString;
+  return toBase64Url(compressed);
+}
+
+export async function compressAndEncodeText(inputString: string) {
+  const inputBytes = new TextEncoder().encode(inputString);
+  return await compressAndEncode(inputBytes);
 }
 
 export async function decodeAndDecompress(base64UrlString: string) {
   const brotli = await loadBrotli();
   const compressed = fromBase64Url(base64UrlString);
-  const decompressed = brotli.decompress(compressed);
-  const outputString = new TextDecoder("utf-8", { fatal: true }).decode(decompressed);
-  return outputString;
+  return brotli.decompress(compressed);
+}
+
+export async function decodeAndDecompressText(base64UrlString: string) {
+  const decompressed = await decodeAndDecompress(base64UrlString);
+  return new TextDecoder("utf-8", { fatal: true }).decode(decompressed);
 }
