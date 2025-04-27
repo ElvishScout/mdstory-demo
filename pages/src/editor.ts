@@ -1,76 +1,99 @@
-import { compressAndEncode } from "@/utils/compress";
+import { compressAndEncodeText } from "@/utils/compress";
 import { FcEditor } from "@/components";
+import kvStore from "@/utils/kvstore";
 
 customElements.define("fc-editor", FcEditor, { extends: "textarea" });
 
-export const createEditor = (root: HTMLElement) => {
-  document.title = "Source Editor";
+export type FileAsset = {
+  alias: string;
+  file: File;
+};
 
-  const heading = document.createElement("h1");
-  heading.classList.add("editor-heading");
-  heading.innerText = "Source Editor";
-  root.append(heading);
+export const createEditor = (root: HTMLElement, content: string) => {
+  const assets: Record<number, FileAsset> = {};
+  let count = 0;
 
-  const tools = document.createElement("div");
-  tools.classList.add("editor-tools");
-  root.append(tools);
+  const inputUpload = root.querySelector<HTMLInputElement>("input[name=input-upload]")!;
+  const buttonUpload = root.querySelector<HTMLButtonElement>("button[name=button-upload]")!;
+  const assetsList = root.querySelector<HTMLDivElement>("div.assets-list")!;
+  const template = root.querySelector<HTMLTemplateElement>("#asset-entry")!;
+  const assetEntry = template.content.firstElementChild! as HTMLDivElement;
 
-  const label = document.createElement("label");
-  tools.append(label);
+  buttonUpload.onclick = () => {
+    inputUpload.click();
+  };
 
-  const span = document.createElement("span");
-  span.innerText = "Tab size:";
-  label.append(span);
+  inputUpload.onchange = () => {
+    if (!inputUpload.files) {
+      return;
+    }
+    for (const file of inputUpload.files) {
+      const id = count++;
 
-  const select = document.createElement("select");
-  label.append(select);
+      assets[id] = { alias: file.name, file: file };
 
-  for (let i = 1; i <= 8; i++) {
-    const option = document.createElement("option");
-    option.innerText = option.value = `${i}`;
-    select.append(option);
-  }
+      const newEntry = assetEntry.cloneNode(true) as HTMLDivElement;
+      assetsList.append(newEntry);
 
-  const buttons = document.createElement("div");
-  buttons.classList.add("button-group");
-  tools.append(buttons);
+      const [input, span, button] = newEntry.children as unknown as [
+        HTMLInputElement,
+        HTMLSpanElement,
+        HTMLButtonElement
+      ];
 
-  const copy = document.createElement("button");
-  copy.type = "button";
-  copy.innerText = "Copy URL";
-  buttons.append(copy);
+      input.value = file.name;
+      span.innerText = file.name;
 
-  const preview = document.createElement("button");
-  preview.type = "button";
-  preview.innerText = "Preview";
-  buttons.append(preview);
+      input.readOnly = true;
+      input.ondblclick = () => {
+        input.readOnly = false;
+      };
+      input.onchange = () => {
+        assets[id].alias = input.value;
+        input.readOnly = true;
+      };
+      input.onkeydown = (ev) => {
+        if (ev.key === "Enter") {
+          input.readOnly = true;
+        }
+      };
+      input.onblur = () => {
+        input.readOnly = true;
+      };
+      button.onclick = () => {
+        delete assets[id];
+        newEntry.remove();
+      };
+    }
+    inputUpload.value = "";
+  };
 
-  const editor = document.createElement("textarea", { is: "fc-editor" }) as FcEditor;
-  editor.ariaLabel = "editor";
-  root.append(editor);
+  const select = root.querySelector<HTMLSelectElement>("select[name=tab-size]")!;
+  const copy = root.querySelector<HTMLButtonElement>("button[name=copy]")!;
+  const preview = root.querySelector<HTMLButtonElement>("button[name=preview]")!;
+  const editor = root.querySelector<FcEditor>("textarea[name=editor]")!;
 
+  select.value = "2";
   select.oninput = () => {
     editor.tabSize = parseInt(select.value);
   };
-  select.value = "2";
-  editor.tabSize = 2;
+
+  editor.ariaLabel = "editor";
+  editor.value = content;
+  editor.tabSize = parseInt(select.value);
 
   copy.onclick = async () => {
-    const encodedContent = await compressAndEncode(editor.value);
+    const encodedContent = await compressAndEncodeText(editor.value);
     const url = new URL(location.href);
-    url.searchParams.set("mode", "editor");
     url.searchParams.set("content", encodedContent);
     navigator.clipboard.writeText(url.href);
     alert("URL copied to clipboard successfully.");
   };
 
-  preview.onclick = () => {
-    sessionStorage.setItem("content", editor.value);
+  preview.onclick = async () => {
+    const assetsObj = Object.fromEntries(Object.values(assets).map(({ alias, file }) => [alias, file]));
+    await kvStore.set("content", editor.value);
+    await kvStore.set("assets", assetsObj);
     window.open("/preview/", "_blank");
   };
-
-  const content = sessionStorage.getItem("content");
-  if (content !== null) {
-    editor.value = content;
-  }
 };

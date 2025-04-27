@@ -1,18 +1,22 @@
 import "./style.css";
 
 import { createPreview } from "./preview";
-import { decodeAndDecompress } from "@/utils/compress";
+import { decodeAndDecompressText } from "@/utils/compress";
+import kvStore from "@/utils/kvstore";
 
 const root = document.querySelector<HTMLDivElement>(".preview")!;
 
 const createPage = async (root: HTMLElement) => {
   const { searchParams } = new URL(location.href);
-  const content = searchParams.get("content");
+
+  let content = searchParams.get("content");
   if (content !== null) {
-    const decodedContent = await decodeAndDecompress(content);
-    sessionStorage.setItem("content", decodedContent);
+    content = await decodeAndDecompressText(content);
+  } else {
+    content = await kvStore.get("content");
   }
-  createPreview(root);
+  const fileAssets = (await kvStore.get<Record<string, File>>("assets")) ?? {};
+  createPreview(root, content ?? "", fileAssets);
 };
 
 createPage(root);

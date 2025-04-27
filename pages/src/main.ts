@@ -1,18 +1,21 @@
 import "./style.css";
 
 import { createEditor } from "./editor";
-import { decodeAndDecompress } from "@/utils/compress";
+import { decodeAndDecompressText } from "@/utils/compress";
+import kvStore from "@/utils/kvstore";
 
-const root = document.querySelector<HTMLDivElement>(".editor")!;
+const root = document.querySelector<HTMLDivElement>("#root")!;
 
 const createPage = async (root: HTMLElement) => {
   const { searchParams } = new URL(location.href);
-  const content = searchParams.get("content");
+
+  let content = searchParams.get("content");
   if (content !== null) {
-    const decodedContent = await decodeAndDecompress(content);
-    sessionStorage.setItem("content", decodedContent);
+    content = await decodeAndDecompressText(content);
+  } else {
+    content = await kvStore.get("content");
   }
-  createEditor(root);
+  createEditor(root, content ?? "");
 };
 
 createPage(root);

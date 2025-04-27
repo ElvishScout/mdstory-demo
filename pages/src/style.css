@@ -9,16 +9,88 @@
 }
 
 body {
-  @apply overflow-auto;
+  @apply overscroll-none touch-manipulation;
 }
 
-.editor {
-  @apply px-2 md:px-12 py-4 md:py-8 w-screen h-screen flex flex-col md:text-lg;
-  scrollbar-gutter: stable both-edges;
+#root {
+  @apply px-4 py-4 w-screen h-screen flex flex-col;
 }
 
-.editor .fc-editor {
-  @apply grow min-h-32 border-2 border-red-700 text-sm resize-none;
+.editor-main {
+  @apply grow flex gap-2 flex-col sm:flex-row overflow-hidden;
+}
+
+.tools,
+.tools * {
+  @apply select-none;
+}
+
+.tools button {
+  @apply mx-0.5 text-red-600 hover:text-red-400 active:text-red-300 underline cursor-pointer;
+}
+
+.editor-assets {
+  @apply sm:grow-[1] sm:basis-0 sm:min-w-64 flex flex-col;
+}
+
+.check-toggle {
+  @apply sr-only;
+}
+
+.assets-tools {
+  @apply px-2 py-1 flex justify-between;
+}
+
+.check-label * {
+  @apply pointer-events-auto;
+}
+
+.check-toggle:checked ~ .assets-tools {
+  @apply border-b-2 border-red-700 sm:border-none;
+}
+
+.check-toggle:checked ~ .assets-tools button {
+  @apply hidden sm:block;
+}
+
+.upload-assets {
+  @apply sr-only;
+}
+
+.assets-list {
+  @apply sm:grow px-2 py-2 h-32 border-2 border-red-700 text-sm overflow-auto;
+}
+
+.asset-entry {
+  @apply py-1 flex gap-2;
+}
+
+.asset-entry * {
+  @apply text-nowrap;
+}
+
+.asset-alias {
+  @apply grow-[1] basis-0 px-1.5 min-w-0 border-b border-red-700 read-only:bg-red-100;
+}
+
+.asset-name {
+  @apply grow-[1] basis-0 min-w-0 overflow-hidden overflow-ellipsis text-gray-500;
+}
+
+.delete-asset {
+  @apply text-red-600 hover:text-red-400 active:text-red-300 underline cursor-pointer;
+}
+
+.check-label:has(input:checked) ~ .assets-list {
+  @apply hidden sm:block;
+}
+
+.editor-editor {
+  @apply grow-[3] basis-0 flex flex-col;
+}
+
+.editor-editor .fc-editor {
+  @apply grow border-2 border-red-700 text-sm resize-none;
 }
 
 .editor-heading {
@@ -26,13 +98,9 @@ body {
 }
 
 .editor-tools {
-  @apply my-2 px-4 flex justify-between;
+  @apply px-2 py-1 flex justify-between;
 }
 
 .editor-tools select {
   @apply w-16 text-center cursor-pointer;
-}
-
-.editor-tools button {
-  @apply mr-4 last:mr-0 text-red-600 hover:text-red-400 active:text-red-300 underline cursor-pointer;
 }
