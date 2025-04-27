@@ -1,21 +1,33 @@
-import { parseStoryContent, Asset } from "@elvishscout/mdstory";
+import { parseStoryContent, Asset, StoryBody } from "@elvishscout/mdstory";
 
-const insertContent = async (text: string, content: string, fileAssets: Record<string, File>) => {
-  const assets = Object.fromEntries(
+const insertContent = async (
+  text: string,
+  storyBody: StoryBody,
+  fileAssets: Record<string, File>,
+  mode: "preview" | "standalone"
+) => {
+  const assets: Record<string, Asset> = Object.fromEntries(
     await Promise.all(
       Object.entries(fileAssets).map(async ([alias, file]) => {
-        return new Promise<[string, Asset]>((resolve) => {
-          const fileReader = new FileReader();
-          fileReader.onload = async () => {
-            const url = fileReader.result as string;
-            resolve([alias, { url, mime: file.type }]);
-          };
-          fileReader.readAsDataURL(file);
-        });
+        const mime = file.type;
+        let url: string;
+        if (mode === "preview") {
+          url = URL.createObjectURL(file);
+        } else {
+          url = await new Promise<string>((resolve) => {
+            const fileReader = new FileReader();
+            fileReader.onload = async () => {
+              const url = fileReader.result as string;
+              resolve(url);
+            };
+            fileReader.readAsDataURL(file);
+          });
+        }
+        return [alias, { url, mime }];
       })
     )
   );
-  const storyBody = parseStoryContent(content);
+  storyBody = structuredClone(storyBody);
   storyBody.metadata.assets = { ...storyBody.metadata.assets, ...assets };
 
   const dom = new DOMParser().parseFromString(text, "text/html");
@@ -47,16 +59,29 @@ export const createPreview = async (root: HTMLElement, content: string, assets: 
   }
   const template = await response.text();
 
-  const srcdoc = await insertContent(template, content, assets);
-  const blob = new Blob([srcdoc], { type: "text/html" });
-  const dataUrl = URL.createObjectURL(blob);
+  const storyBody = parseStoryContent(content);
+  const html = await insertContent(template, storyBody, assets, "preview");
+  const blob = new Blob([html], { type: "text/html" });
+  const previewUrl = URL.createObjectURL(blob);
 
   const anchor = root.querySelector<HTMLAnchorElement>("a[download]")!;
   const frame = root.querySelector<HTMLIFrameElement>("iframe[title=preview]")!;
 
-  anchor.href = dataUrl;
-  frame.src = dataUrl;
+  let standaloneUrl: string | null = null;
+  anchor.onclick = async (ev) => {
+    if (standaloneUrl === null) {
+      ev.preventDefault();
+      const html = await insertContent(template, storyBody, assets, "standalone");
+      const blob = new Blob([html], { type: "text/html" });
+      standaloneUrl = URL.createObjectURL(blob);
+      const title = storyBody.metadata.title?.trim() || "download";
+      anchor.download = `${title}.html`;
+      anchor.href = standaloneUrl;
+      anchor.click();
+    }
+  };
 
+  frame.src = previewUrl;
   frame.onload = () => {
     frame.contentWindow!.addEventListener("error", (ev) => {
       console.error(ev.error);
