@@ -1,5 +1,0 @@
-@import "tailwindcss";
-
-.fc-editor {
-  @apply block px-1 py-1 font-mono;
-}

@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@layer components {
+  .button-text {
+    @apply mx-0.5 text-red-600 hover:text-red-400 active:text-red-300 underline cursor-pointer;
+  }
+}
+
+* {
+  @apply outline-none;
+}
+
+:root {
+  @apply font-serif bg-white selection:bg-amber-100;
+}
+
+body {
+  @apply overflow-auto;
+}
