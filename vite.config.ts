@@ -2,6 +2,7 @@ import path from "node:path";
 import fs from "fs/promises";
 
 import { defineConfig, PluginOption } from "vite";
+import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 const fileExists = async (filename: string) => {
@@ -38,7 +39,9 @@ const pluginStrictRoute = (): PluginOption => {
             res.writeHead(200, { "content-type": "text/html" });
             res.end(template);
             return;
-          } catch {}
+          } catch {
+            /* empty */
+          }
         }
 
         res.writeHead(404, "file not found");
@@ -76,7 +79,7 @@ export default defineConfig({
       "@": path.resolve(__dirname),
     },
   },
-  plugins: [tailwindcss(), pluginStrictRoute(), pluginFixBrotliWasm()],
+  plugins: [react(), tailwindcss(), pluginStrictRoute(), pluginFixBrotliWasm()],
   root,
   publicDir,
   build: {

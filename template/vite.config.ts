@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
 
@@ -10,7 +11,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "../"),
     },
   },
-  plugins: [tailwindcss(), viteSingleFile()],
+  plugins: [react(), tailwindcss(), viteSingleFile()],
   build: {
     outDir: path.resolve(__dirname, "../dist"),
     emptyOutDir: false,

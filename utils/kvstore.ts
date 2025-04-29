@@ -109,6 +109,3 @@ export class KeyValueStorage {
     });
   }
 }
-
-const kvStore = new KeyValueStorage();
-export default kvStore;

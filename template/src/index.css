@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+* {
+  @apply outline-none;
+}
+
+:root {
+  @apply font-serif bg-white selection:bg-amber-100;
+}
+
+body {
+  @apply overflow-auto;
+}
+
+.chapter-form h1 {
+  @apply my-2 text-2xl;
+}
+
+.chapter-form p {
+  @apply my-2;
+}
