@@ -1,10 +1,13 @@
-import { useRef, useState, useEffect, ChangeEvent, lazy, KeyboardEvent } from "react";
+import { useRef, useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
 import { produce } from "immer";
 import { save, load } from "@/utils/save-load";
 import { compress, decompress } from "@/utils/zip";
 
-import { Extension } from "@uiw/react-codemirror";
-const CodeMirror = lazy(() => import("@uiw/react-codemirror"));
+import { LanguageDescription, LanguageSupport, indentUnit } from "@codemirror/language";
+import { markdown } from "@codemirror/lang-markdown";
+import { yamlFrontmatter } from "@codemirror/lang-yaml";
+import { javascriptLanguage } from "@codemirror/lang-javascript";
+import CodeMirror from "@uiw/react-codemirror";
 
 type AssetEntry = {
   alias: string;
@@ -22,33 +25,22 @@ export default function App() {
   const [assetList, setAssetList] = useState<AssetEntry[]>([]);
   const [tabSize, setTabSize] = useState(2);
   const [source, setSource] = useState("");
-  const [extensions, setExtensions] = useState<Extension[]>([]);
 
-  useEffect(() => {
-    const loadExtensions = async () => {
-      const { LanguageDescription, LanguageSupport, indentUnit } = await import("@codemirror/language");
-      const { markdown } = await import("@codemirror/lang-markdown");
-      const { yamlFrontmatter } = await import("@codemirror/lang-yaml");
-      const { javascriptLanguage } = await import("@codemirror/lang-javascript");
-      const extensions = [
-        indentUnit.of(" ".repeat(tabSize)),
-        yamlFrontmatter({
-          content: markdown({
-            codeLanguages: [
-              LanguageDescription.of({
-                name: "javascript",
-                alias: ["js"],
-                extensions: [".js", ".cjs", ".mjs"],
-                support: new LanguageSupport(javascriptLanguage),
-              }),
-            ],
+  const extensions = [
+    indentUnit.of(" ".repeat(tabSize)),
+    yamlFrontmatter({
+      content: markdown({
+        codeLanguages: [
+          LanguageDescription.of({
+            name: "javascript",
+            alias: ["js"],
+            extensions: [".js", ".cjs", ".mjs"],
+            support: new LanguageSupport(javascriptLanguage),
           }),
-        }),
-      ];
-      setExtensions(extensions);
-    };
-    loadExtensions();
-  }, [tabSize]);
+        ],
+      }),
+    }),
+  ];
 
   useEffect(() => {
     load().then(({ source, fileAssets }) => {

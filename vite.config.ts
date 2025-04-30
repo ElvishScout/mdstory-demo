@@ -90,6 +90,20 @@ export default defineConfig({
         main: path.resolve(root, "index.html"),
         preview: path.resolve(root, "preview/index.html"),
       },
+      output: {
+        manualChunks(id) {
+          if (id.match(/node_modules\/@codemirror\/(view|state)(\/|$)/)) {
+            return "codemirror-core";
+          }
+          if (id.match(/node_modules\/@codemirror(\/|$)/)) {
+            return "codemirror-extensions";
+          }
+          if (id.match(/node_modules\/react(-.*?)?(\/|$)/)) {
+            return "react";
+          }
+          return null;
+        },
+      },
     },
   },
   base: "./",
