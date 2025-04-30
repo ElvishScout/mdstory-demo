@@ -99,7 +99,7 @@ export default function App({ content }: { content: string }) {
       storyRef.current = story;
 
       oldTitle = document.title;
-      const title = storyBody.metadata.title ?? "MdStory";
+      const title = storyBody.metadata.title ?? "";
       document.title = title;
       setTitle(title);
     }
@@ -161,7 +161,7 @@ export default function App({ content }: { content: string }) {
 
   return (
     <div className="px-2 md:px-12 py-4 md:py-8 md:text-lg">
-      <h1 className="mb-4 text-3xl text-center">{title}</h1>
+      {title !== "" && <h1 className="mb-4 text-3xl text-center">{title}</h1>}
       <div>
         {chapters.map(({ html }, i) => {
           const enabled = stage === "started" && i === chapters.length - 1;
