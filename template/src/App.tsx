@@ -1,5 +1,5 @@
 import { StoryBase, StoryBody, StoryPrompt } from "@elvishscout/mdstory";
-import { memo, SyntheticEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, SyntheticEvent, KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import parse, { domToReact, DOMNode, HTMLReactParserOptions, Element as ParserElement } from "html-react-parser";
 import { produce } from "immer";
 
@@ -27,7 +27,7 @@ const parserOptions = (enabled: boolean): HTMLReactParserOptions => ({
   replace(node) {
     if (node.type === "tag") {
       node = node as ParserElement;
-      if (node.tagName === "fc-input") {
+      if (node.tagName === "input") {
         const { type, name, value, checked } = node.attribs;
         return (
           <FcInput
@@ -43,7 +43,7 @@ const parserOptions = (enabled: boolean): HTMLReactParserOptions => ({
             disabled={!enabled}
           />
         );
-      } else if (node.tagName === "fc-button") {
+      } else if (node.tagName === "button") {
         const { type, name, value } = node.attribs;
         return (
           <button
@@ -70,7 +70,7 @@ type ChapterLog = {
 };
 
 export default function App({ content }: { content: string }) {
-  const [started, setStarted] = useState(false);
+  const [stage, setStage] = useState<"ready" | "started" | "ended">("ready");
   const [title, setTitle] = useState("");
   const [chapters, setChapters] = useState<ChapterLog[]>([]);
 
@@ -139,8 +139,14 @@ export default function App({ content }: { content: string }) {
   const handleCoverClick = () => {
     const story = storyRef.current;
     if (story) {
-      story.play(prompt, { format: "html", tagMap: { input: "fc-input", button: "fc-button" } });
-      setStarted(true);
+      story.play(prompt, { format: "html", html: true }).then(() => setStage("ended"));
+      setStage("started");
+    }
+  };
+
+  const handleFormKeyDown = (ev: KeyboardEvent<HTMLFormElement>) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
     }
   };
 
@@ -158,7 +164,7 @@ export default function App({ content }: { content: string }) {
       <h1 className="mb-4 text-3xl text-center">{title}</h1>
       <div>
         {chapters.map(({ html }, i) => {
-          const enabled = i === chapters.length - 1;
+          const enabled = stage === "started" && i === chapters.length - 1;
           return (
             <div
               key={i}
@@ -167,7 +173,11 @@ export default function App({ content }: { content: string }) {
                 !enabled ? "opacity-50" : ""
               }`}
             >
-              <form className="chapter-form" onSubmit={enabled ? handleFormSubmit : (ev) => ev.preventDefault()}>
+              <form
+                className="chapter-form"
+                onKeyDown={handleFormKeyDown}
+                onSubmit={enabled ? handleFormSubmit : (ev) => ev.preventDefault()}
+              >
                 <FormBody html={html} enabled={enabled} />
               </form>
               {enabled && (
@@ -180,7 +190,7 @@ export default function App({ content }: { content: string }) {
           );
         })}
       </div>
-      {!started && (
+      {stage === "ready" && (
         <div
           className="fixed inset-0 flex flex-col justify-center items-center text-4xl leading-0 select-none backdrop-blur-xs z-10 after:content-[''] after:h-16"
           onClick={handleCoverClick}
