@@ -9,6 +9,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { save, load } from "@/utils/save-load";
 import { compress, decompress } from "@/utils/zip";
 import { theme } from "./theme";
+import { markdownHandlebars } from "./extension";
 
 type AssetEntry = {
   alias: string;
@@ -22,6 +23,7 @@ export default function App() {
   const inputAssets = useRef<HTMLInputElement>(null);
   const inputArchive = useRef<HTMLInputElement>(null);
   const anchorArchive = useRef<HTMLAnchorElement>(null);
+  const sourceRef = useRef("");
 
   const [assetList, setAssetList] = useState<AssetEntry[]>([]);
   const [tabSize, setTabSize] = useState(2);
@@ -40,6 +42,7 @@ export default function App() {
             support: new LanguageSupport(javascriptLanguage),
           }),
         ],
+        extensions: [markdownHandlebars],
       }),
     }),
   ];
@@ -143,7 +146,7 @@ export default function App() {
 
   const handleButtonPreviewClick = async () => {
     const fileAssets = Object.fromEntries(assetList.map(({ alias, file }) => [alias, file]));
-    await save({ source, fileAssets });
+    await save({ source: sourceRef.current, fileAssets });
     window.open("/preview/", "_blank");
   };
 
@@ -228,7 +231,7 @@ export default function App() {
               height="100%"
               extensions={extensions}
               value={source}
-              onChange={(value) => setSource(value)}
+              onChange={(value) => (sourceRef.current = value)}
             />
           </div>
         </div>
