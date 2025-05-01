@@ -5,7 +5,7 @@
 }
 
 :root {
-  @apply font-serif bg-white selection:bg-amber-100;
+  @apply font-serif bg-white selection:bg-red-100;
 }
 
 body {

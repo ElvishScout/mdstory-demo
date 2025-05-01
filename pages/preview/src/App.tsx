@@ -1,19 +1,15 @@
-import { Asset, StoryBody, parseStoryContent } from "@elvishscout/mdstory";
+import { Asset, StoryBody, parseStorySource } from "@elvishscout/mdstory";
 import { SyntheticEvent, useEffect, useState } from "react";
 
 import { load } from "@/utils/save-load";
 
-const compileTemplate = (html: string) => {
-  const dom = new DOMParser().parseFromString(html, "text/html");
-  const doctype = dom.doctype ? new XMLSerializer().serializeToString(dom.doctype) : "";
-  const template = dom.querySelector<HTMLTemplateElement>("#content")!;
-  const preContent = template.content.firstElementChild! as HTMLPreElement;
-
+const compileTemplate = (template: string) => {
   return (storyBody: StoryBody, assets: Record<string, Asset>) => {
     storyBody = structuredClone(storyBody);
     storyBody.metadata.assets = assets;
-    preContent.textContent = JSON.stringify(storyBody);
-    const html = doctype + dom.documentElement.outerHTML;
+    const storyBodyJson = JSON.stringify(storyBody);
+    const storyBodyHtml = storyBodyJson.replace(/[&<>'"]/, (char) => `&#${char.charCodeAt(0)};`);
+    const html = template.replace("{{story-body}}", storyBodyHtml);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     return url;
@@ -34,7 +30,7 @@ export default function App() {
       const template = compileTemplate(templateHtml);
 
       const { source, fileAssets } = await load();
-      const storyBody = parseStoryContent(source);
+      const storyBody = parseStorySource(source);
       const title = storyBody.metadata.title ?? "story";
 
       const previewAssets: Record<string, Asset> = {};
