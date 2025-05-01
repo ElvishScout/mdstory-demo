@@ -6,9 +6,9 @@ import { load } from "@/utils/save-load";
 const compileTemplate = (template: string) => {
   return (storyBody: StoryBody, assets: Record<string, Asset>) => {
     storyBody = structuredClone(storyBody);
-    storyBody.metadata.assets = assets;
+    storyBody.metadata.assets = Object.assign(storyBody.metadata.assets ?? {}, assets);
     const storyBodyJson = JSON.stringify(storyBody);
-    const storyBodyHtml = storyBodyJson.replace(/[&<>'"]/, (char) => `&#${char.charCodeAt(0)};`);
+    const storyBodyHtml = storyBodyJson.replace(/[&<>'"]/g, (char) => `&#${char.charCodeAt(0)};`);
     const html = template.replace("{{story-body}}", storyBodyHtml);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
