@@ -22,7 +22,6 @@
     "@elvishscout/mdstory": "^0.1.4",
     "@lezer/highlight": "^1.2.1",
     "@lezer/markdown": "^1.4.3",
-    "@uiw/codemirror-theme-vscode": "^4.23.11",
     "@uiw/codemirror-themes": "^4.23.11",
     "@uiw/react-codemirror": "^4.23.11",
     "fflate": "^0.8.2",
