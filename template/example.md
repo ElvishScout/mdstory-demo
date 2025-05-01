@@ -12,7 +12,7 @@ globals:
   return {
     onEnter(globals) {
       counter++;    
-      const order = String(counter) + (["st", "nd", "rd"][(counter + 9) % 10] ?? "th");
+      const order = String(counter) + ["st", "nd", "rd", "th"][Math.min((counter + 9) % 10, 3)];
       
       return {
         alive: counter <= 5,

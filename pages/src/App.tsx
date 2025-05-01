@@ -1,13 +1,14 @@
 import { useRef, useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
 import { produce } from "immer";
-import { save, load } from "@/utils/save-load";
-import { compress, decompress } from "@/utils/zip";
-
 import { LanguageDescription, LanguageSupport, indentUnit } from "@codemirror/language";
 import { markdown } from "@codemirror/lang-markdown";
 import { yamlFrontmatter } from "@codemirror/lang-yaml";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
 import CodeMirror from "@uiw/react-codemirror";
+
+import { save, load } from "@/utils/save-load";
+import { compress, decompress } from "@/utils/zip";
+import { theme } from "./theme";
 
 type AssetEntry = {
   alias: string;
@@ -27,6 +28,7 @@ export default function App() {
   const [source, setSource] = useState("");
 
   const extensions = [
+    theme,
     indentUnit.of(" ".repeat(tabSize)),
     yamlFrontmatter({
       content: markdown({
@@ -226,7 +228,7 @@ export default function App() {
               height="100%"
               extensions={extensions}
               value={source}
-              onChange={(value) => value !== undefined && setSource(value)}
+              onChange={(value) => setSource(value)}
             />
           </div>
         </div>

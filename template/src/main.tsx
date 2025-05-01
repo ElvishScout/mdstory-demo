@@ -3,9 +3,8 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 
-const template = document.querySelector<HTMLTemplateElement>("#content")!;
-const pre = template.content.firstElementChild! as HTMLPreElement;
-const content = pre.textContent ?? "";
+const template = document.querySelector<HTMLTemplateElement>("#story-body")!;
+const content = template.content.textContent ?? "";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
