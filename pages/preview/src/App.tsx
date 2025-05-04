@@ -20,6 +20,7 @@ export default function App() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadName, setDownloadName] = useState("");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const urls: string[] = [];
@@ -60,6 +61,7 @@ export default function App() {
       setPreviewUrl(previewUrl);
       setDownloadUrl(downloadUrl);
       setDownloadName(`${title}.html`);
+      setReady(true);
     };
     setupPage();
 
@@ -98,8 +100,13 @@ export default function App() {
   return (
     <div className="w-screen h-screen flex flex-col">
       <div className="px-4 py-2 flex justify-center border-b-2 border-red-700">
-        <a className="button-text" href={downloadUrl} download={downloadName}>
-          Download Standalone HTML
+        <a
+          className="button-text"
+          href={downloadUrl}
+          download={downloadName}
+          onClick={ready ? undefined : (ev) => ev.preventDefault()}
+        >
+          {ready ? <>Download Standalone HTML</> : <>Loading</>}
         </a>
       </div>
       <iframe className="grow" src={previewUrl || undefined} onLoad={handleFrameLoad} />
