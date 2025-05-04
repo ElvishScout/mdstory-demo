@@ -4,11 +4,11 @@ import { LanguageDescription, LanguageSupport, indentUnit } from "@codemirror/la
 import { markdown } from "@codemirror/lang-markdown";
 import { yamlFrontmatter } from "@codemirror/lang-yaml";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
-import CodeMirror from "@uiw/react-codemirror";
+import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 
 import { save, load } from "@/utils/save-load";
 import { compress, decompress } from "@/utils/zip";
-import { theme } from "./theme";
+import { theme, highlight } from "./theme";
 import { markdownHandlebars } from "./extension";
 
 type AssetEntry = {
@@ -27,11 +27,14 @@ export default function App() {
 
   const [assetList, setAssetList] = useState<AssetEntry[]>([]);
   const [tabSize, setTabSize] = useState(2);
+  const [wrapText, setWrapText] = useState(true);
   const [source, setSource] = useState("");
 
   const extensions = [
     theme,
+    highlight,
     indentUnit.of(" ".repeat(tabSize)),
+    wrapText ? EditorView.lineWrapping : [],
     yamlFrontmatter({
       content: markdown({
         codeLanguages: [
@@ -54,6 +57,7 @@ export default function App() {
         file,
         readonly: true,
       }));
+      sourceRef.current = source;
       setSource(source);
       setAssetList(assetList);
     });
@@ -152,12 +156,20 @@ export default function App() {
 
   return (
     <div className="w-screen h-screen p-4 flex flex-col">
-      <h1 className="mb-4 text-3xl text-center">Source Editor</h1>
+      <div className="relative mb-2 grid grid-cols-[1fr_auto_1fr] gap-2 items-baseline">
+        <span></span>
+        <h1 className="text-3xl">Source Editor</h1>
+        <span>
+          <a className="button-text text-lg" target="_blank" href={import.meta.env.VITE_GITHUB}>
+            GitHub
+          </a>
+        </span>
+      </div>
       <div className="grow flex gap-2 flex-col sm:flex-row overflow-hidden">
         <div className="sm:grow-[1] sm:basis-0 sm:min-w-64 flex flex-col">
           <label className="peer">
             <div className="px-2 py-1 flex justify-between has-[:checked]:border-b-2 sm:border-none border-red-700">
-              <input className="peer hidden" type="checkbox" />
+              <input className="peer hidden" type="checkbox" defaultChecked />
               <span>Assets</span>
               <input className="hidden" ref={inputAssets} type="file" multiple onChange={handleInputAssetsChange} />
               <button
@@ -196,21 +208,27 @@ export default function App() {
         </div>
         <div className="grow-[3] basis-0 flex flex-col overflow-hidden">
           <div className="px-2 py-1 flex justify-between">
-            <label>
-              <span>Tab Size</span>
-              <select
-                className="w-16 text-center cursor-pointer"
-                value={tabSize}
-                onChange={(ev) => setTabSize(parseInt(ev.currentTarget.value))}
-              >
-                {tabSizeOptions.map((value, i) => (
-                  <option key={i} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div>
+            <div className="space-x-4">
+              <label className="text-nowrap">
+                <span>Tab Size</span>
+                <select
+                  className="w-12 text-center cursor-pointer"
+                  value={tabSize}
+                  onChange={(ev) => setTabSize(parseInt(ev.currentTarget.value))}
+                >
+                  {tabSizeOptions.map((value, i) => (
+                    <option key={i} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="text-nowrap button-text" onClick={() => setWrapText((value) => !value)}>
+                <span>Wrap Text </span>
+                <span>{wrapText ? <>On</> : <>Off</>}</span>
+              </button>
+            </div>
+            <div className="space-x-2">
               <input ref={inputArchive} className="hidden" type="file" onChange={handleInputArchiveChange} />
               <button className="button-text" type="button" onClick={() => inputArchive.current!.click()}>
                 Upload

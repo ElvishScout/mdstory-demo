@@ -2,7 +2,7 @@
 
 @layer components {
   .button-text {
-    @apply mx-0.5 text-red-600 hover:text-red-400 active:text-red-300 underline cursor-pointer;
+    @apply text-red-600 hover:text-red-400 active:text-red-300 underline cursor-pointer;
   }
 }
 
@@ -11,7 +11,7 @@
 }
 
 :root {
-  @apply font-serif bg-white selection:bg-red-100;
+  @apply font-serif bg-white selection:bg-red-200;
 }
 
 body {
