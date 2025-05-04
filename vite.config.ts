@@ -71,6 +71,7 @@ const pluginFixBrotliWasm = (): PluginOption => {
 };
 
 const root = path.resolve(__dirname, "pages");
+const envDir = path.resolve(__dirname);
 const publicDir = path.resolve(__dirname, "public");
 
 export default defineConfig({
@@ -81,6 +82,7 @@ export default defineConfig({
   },
   plugins: [react(), tailwindcss(), pluginStrictRoute(), pluginFixBrotliWasm()],
   root,
+  envDir,
   publicDir,
   build: {
     outDir: path.resolve(__dirname, "dist"),
@@ -93,10 +95,10 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.match(/node_modules\/@codemirror\/(view|state)(\/|$)/)) {
-            return "codemirror-core";
+            return "cm-core";
           }
           if (id.match(/node_modules\/@codemirror(\/|$)/)) {
-            return "codemirror-extensions";
+            return "cm-ext";
           }
           if (id.match(/node_modules\/react(-.*?)?(\/|$)/)) {
             return "react";
