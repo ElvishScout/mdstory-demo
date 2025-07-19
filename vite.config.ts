@@ -1,9 +1,16 @@
 import path from "node:path";
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 
 import { defineConfig, PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
+
+const ROOT = path.resolve(__dirname, "pages");
+const ENV_DIR = path.resolve(__dirname);
+const DIST_DIR = path.resolve(__dirname, "dist");
+const PUBLIC_DIR = path.resolve(__dirname, "public");
+const TEMPLATE_DIST_DIR = path.resolve(__dirname, "template/dist");
 
 const fileExists = async (filename: string) => {
   try {
@@ -29,13 +36,12 @@ const pluginStrictRoute = (): PluginOption => {
           (await fileExists(path.resolve(root, relativePath))) ||
           (await fileExists(path.resolve(publicDir, relativePath)))
         ) {
-          next();
-          return;
+          return next();
         }
 
         if (relativePath === "template.html") {
           try {
-            const template = await fs.readFile(path.resolve(__dirname, "dist/template.html"));
+            const template = await fs.readFile(path.resolve(TEMPLATE_DIST_DIR, "template.html"));
             res.writeHead(200, { "content-type": "text/html" });
             res.end(template);
             return;
@@ -70,9 +76,14 @@ const pluginFixBrotliWasm = (): PluginOption => {
   };
 };
 
-const root = path.resolve(__dirname, "pages");
-const envDir = path.resolve(__dirname);
-const publicDir = path.resolve(__dirname, "public");
+const vitePwaConfig: Partial<VitePWAOptions> = {
+  manifest: false,
+  registerType: "autoUpdate",
+  workbox: {
+    cacheId: Date.now().toString(36),
+    globPatterns: ["**/*.{js,wasm,css,html,png}"],
+  },
+};
 
 export default defineConfig({
   resolve: {
@@ -80,17 +91,17 @@ export default defineConfig({
       "@": path.resolve(__dirname),
     },
   },
-  plugins: [react(), tailwindcss(), pluginStrictRoute(), pluginFixBrotliWasm()],
-  root,
-  envDir,
-  publicDir,
+  plugins: [react(), tailwindcss(), pluginStrictRoute(), pluginFixBrotliWasm(), VitePWA(vitePwaConfig)],
+  root: ROOT,
+  envDir: ENV_DIR,
+  publicDir: PUBLIC_DIR,
   build: {
-    outDir: path.resolve(__dirname, "dist"),
+    outDir: DIST_DIR,
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: path.resolve(root, "index.html"),
-        preview: path.resolve(root, "preview/index.html"),
+        main: path.resolve(ROOT, "index.html"),
+        preview: path.resolve(ROOT, "preview/index.html"),
       },
       output: {
         manualChunks(id) {
@@ -108,5 +119,4 @@ export default defineConfig({
       },
     },
   },
-  base: "./",
 });

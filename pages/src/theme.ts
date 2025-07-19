@@ -65,8 +65,8 @@ export const highlight = syntaxHighlighting(
     { tag: t.attributeName, color: "var(--color-cyan-800)" },
     { tag: hbsInline, color: "var(--color-yellow-600)" },
     // Markdown
-    { tag: t.heading1, color: "var(--color-red-700)", borderBottom: "3px double", fontWeight: "bold" },
-    { tag: t.heading2, color: "var(--color-yellow-600)", borderBottom: "1px solid", fontWeight: "bold" },
+    { tag: t.heading1, color: "var(--color-red-700)", fontSize: "var(--text-xl)", fontWeight: "bold" },
+    { tag: t.heading2, color: "var(--color-yellow-600)", fontSize: "var(--text-lg)", fontWeight: "bold" },
     { tag: t.heading3, color: "var(--color-green-600)", fontWeight: "bold" },
     { tag: t.heading4, color: "var(--color-blue-600)", fontWeight: "bold" },
     { tag: t.heading, color: "var(--color-gray-500)", fontWeight: "bold" },

@@ -21,7 +21,7 @@ const pluginUseExample = (): PluginOption => {
           const storyBody = parseStorySource(source);
           const storyBodyJson = JSON.stringify(storyBody);
           const storyBodyHtml = storyBodyJson.replace(/[&<>'"]/g, (char) => `&#${char.charCodeAt(0)};`);
-          return html.replace("{{story-body}}", storyBodyHtml);
+          return html.replace("<!-- STORY_BODY -->", storyBodyHtml);
         }
         return html;
       },
@@ -37,7 +37,7 @@ export default defineConfig({
   },
   plugins: [react(), tailwindcss(), viteSingleFile(), pluginUseExample()],
   build: {
-    outDir: path.resolve(__dirname, "../dist"),
+    outDir: path.resolve(__dirname, "../public"),
     emptyOutDir: false,
     rollupOptions: {
       input: {

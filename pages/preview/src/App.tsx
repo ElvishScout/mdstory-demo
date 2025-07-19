@@ -9,7 +9,7 @@ const compileTemplate = (template: string) => {
     storyBody.metadata.assets = Object.assign(storyBody.metadata.assets ?? {}, assets);
     const storyBodyJson = JSON.stringify(storyBody);
     const storyBodyHtml = storyBodyJson.replace(/[&<>'"]/g, (char) => `&#${char.charCodeAt(0)};`);
-    const html = template.replace("{{story-body}}", storyBodyHtml);
+    const html = template.replace("<!-- STORY_BODY -->", storyBodyHtml);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     return url;
