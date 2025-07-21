@@ -186,7 +186,7 @@ export default function App() {
               return (
                 <div key={i} className="flex gap-2 text-sm">
                   <input
-                    className="grow basis-0 min-w-0 px-1 border-b border-red-700 read-only:bg-red-100"
+                    className="grow-[2] basis-0 min-w-0 px-1 border-b border-red-700 read-only:bg-red-100"
                     type="text"
                     value={alias}
                     readOnly={readonly}
@@ -195,8 +195,8 @@ export default function App() {
                     onBlur={() => handleInputAliasBlur(i)}
                     onChange={(ev) => handleInputAliasChange(i, ev)}
                   />
-                  <div className="grow basis-0 min-w-0 text-gray-500 overflow-hidden overflow-ellipsis text-nowrap">
-                    {file.name}
+                  <div className="grow-[1] basis-0 min-w-0 text-gray-500 overflow-hidden overflow-ellipsis text-nowrap">
+                    {file.type}
                   </div>
                   <button className="button-text" onClick={() => handleButtonDeleteClick(i)}>
                     Delete

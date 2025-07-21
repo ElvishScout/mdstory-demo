@@ -85,14 +85,18 @@ export default function App() {
     if (frameTitle) {
       document.title = frameTitle.innerText;
       new MutationObserver(() => {
-        document.title = frameTitle.innerText;
+        if (frameTitle.innerText) {
+          document.title = frameTitle.innerText;
+        }
       }).observe(frameTitle, { childList: true });
     }
     if (frameIcon) {
       const icon = document.head.querySelector<HTMLLinkElement>("link[rel=icon]")!;
       icon.href = frameIcon.href;
       new MutationObserver(() => {
-        icon.href = frameIcon.href;
+        if (frameIcon.href) {
+          icon.href = frameIcon.href;
+        }
       }).observe(frameIcon, { attributes: true });
     }
   };
