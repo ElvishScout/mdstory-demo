@@ -1,27 +1,27 @@
-import { StoryBase, StoryBody, StoryPrompt } from "@elvishscout/mdstory";
+import { Story, StoryPrompt } from "@elvishscout/mdstory";
 import { memo, SyntheticEvent, KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import parse, { domToReact, DOMNode, HTMLReactParserOptions, Element as ParserElement } from "html-react-parser";
 import { produce } from "immer";
 
 import FcInput from "./components/fc-input";
 
-const dataUrlToObjectUrl = (dataUrl: string) => {
-  const commaIndex = dataUrl.indexOf(",");
-  const head = dataUrl.substring(0, commaIndex + 1);
-  const body = dataUrl.substring(commaIndex + 1);
+// const dataUrlToObjectUrl = (dataUrl: string) => {
+//   const commaIndex = dataUrl.indexOf(",");
+//   const head = dataUrl.substring(0, commaIndex + 1);
+//   const body = dataUrl.substring(commaIndex + 1);
 
-  const [, type, base64] = head.match(/^data:(.*?)(;base64)?,$/)!;
+//   const [, type, base64] = head.match(/^data:(.*?)(;base64)?,$/)!;
 
-  let blobPart;
-  if (base64 !== undefined) {
-    blobPart = Uint8Array.from(Array.from(atob(body), (char) => char.charCodeAt(0)));
-  } else {
-    blobPart = decodeURIComponent(body);
-  }
-  const blob = new Blob([blobPart], { type });
+//   let blobPart;
+//   if (base64 !== undefined) {
+//     blobPart = Uint8Array.from(Array.from(atob(body), (char) => char.charCodeAt(0)));
+//   } else {
+//     blobPart = decodeURIComponent(body);
+//   }
+//   const blob = new Blob([blobPart], { type });
 
-  return URL.createObjectURL(blob);
-};
+//   return URL.createObjectURL(blob);
+// };
 
 const parserOptions = (enabled: boolean): HTMLReactParserOptions => ({
   replace(node) {
@@ -71,38 +71,25 @@ type ChapterLog = {
 
 export default function App({ content }: { content: string }) {
   const [stage, setStage] = useState<"ready" | "started" | "ended">("ready");
-  const [title, setTitle] = useState("");
   const [chapters, setChapters] = useState<ChapterLog[]>([]);
 
-  const storyRef = useRef<StoryBase | null>(null);
+  const storyRef = useRef<Story | null>(null);
   const chapterRef = useRef<HTMLDivElement>(null);
   const chapterCoverRef = useRef<HTMLDivElement>(null);
   const resolveRef = useRef<(formData: FormData) => void>(null);
 
   useEffect(() => {
-    let oldTitle: string | null = null;
+    const oldTitle = document.title;
     const urls: string[] = [];
-    if (content) {
-      const storyBody = JSON.parse(content) as StoryBody;
-      const assets = storyBody.metadata.assets;
-      if (assets) {
-        for (const alias in assets) {
-          const { url } = assets[alias];
-          if (assets[alias].url.startsWith("data:")) {
-            const objectUrl = dataUrlToObjectUrl(url);
-            assets[alias].url = objectUrl;
-            urls.push(objectUrl);
-          }
-        }
-      }
-      const story = new StoryBase(storyBody);
-      storyRef.current = story;
 
-      oldTitle = document.title;
-      const title = storyBody.metadata.title ?? "";
-      document.title = title;
-      setTitle(title);
+    if (content) {
+      Story.fromSource(content).then((story) => {
+        storyRef.current = story;
+        const title = story.metadata.title ?? "";
+        document.title = title;
+      });
     }
+
     return () => {
       if (oldTitle !== null) {
         document.title = oldTitle;
@@ -129,7 +116,7 @@ export default function App({ content }: { content: string }) {
     setChapters(
       produce((draft) => {
         draft.push({ html: text });
-      })
+      }),
     );
     return new Promise((resolve) => {
       resolveRef.current = resolve;
@@ -139,7 +126,7 @@ export default function App({ content }: { content: string }) {
   const handleCoverClick = () => {
     const story = storyRef.current;
     if (story) {
-      story.play(prompt, { format: "html", html: true }).then(() => setStage("ended"));
+      story.play(prompt, { renderer: "html" }).then(() => setStage("ended"));
       setStage("started");
     }
   };
@@ -160,8 +147,7 @@ export default function App({ content }: { content: string }) {
   };
 
   return (
-    <div className="px-2 md:px-12 py-4 md:py-8 md:text-lg">
-      {title !== "" && <h1 className="mb-4 text-3xl text-center">{title}</h1>}
+    <div className="px-2 md:px-12 py-4 md:py-8">
       <div>
         {chapters.map(({ html }, i) => {
           const enabled = stage === "started" && i === chapters.length - 1;
