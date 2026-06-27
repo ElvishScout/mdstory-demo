@@ -94,14 +94,26 @@ export default defineConfig({
       },
       output: {
         manualChunks(id) {
-          if (id.match(/node_modules\/@codemirror\/(view|state)(\/|$)/)) {
+          if (id.match(/\/@codemirror\/(view|state)(\/|$)/)) {
             return "cm-core";
           }
-          if (id.match(/node_modules\/@codemirror(\/|$)/)) {
+          if (id.match(/\/@codemirror(\/|$)/)) {
             return "cm-ext";
           }
-          if (id.match(/node_modules\/react(-.*?)?(\/|$)/)) {
+          if (id.match(/\/react(-.*?)?(\/|$)/)) {
             return "react";
+          }
+          if (id.match(/\/zod(\/|$)/)) {
+            return "zod";
+          }
+          // if (id.match(/\/markdown-it(-.*?)?(\/|$)/)) {
+          //   return "markdown-it";
+          // }
+          if (id.match(/\/mdstory\/html-template(\/|$)/)) {
+            return "template";
+          }
+          if (id.match(/\/mdstory(\/|$)/)) {
+            return "mdstory";
           }
           return null;
         },

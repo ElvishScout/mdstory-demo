@@ -1,15 +1,18 @@
-import { Asset, StoryBody, parseStorySource } from "@elvishscout/mdstory";
+import { Asset, ParsedStory, parseStorySource } from "@elvishscout/mdstory";
+import templateHtml from "@elvishscout/mdstory/html-template/dist/index.html?raw";
 import { SyntheticEvent, useEffect, useState } from "react";
 
 import { load } from "@/utils/save-load";
 
 const compileTemplate = (template: string) => {
-  return (storyBody: StoryBody, assets: Record<string, Asset>) => {
-    storyBody = structuredClone(storyBody);
-    storyBody.metadata.assets = Object.assign(storyBody.metadata.assets ?? {}, assets);
-    const storyBodyJson = JSON.stringify(storyBody);
-    const storyBodyHtml = storyBodyJson.replace(/[&<>'"]/g, (char) => `&#${char.charCodeAt(0)};`);
-    const html = template.replace("{{story-body}}", storyBodyHtml);
+  return (parsedStory: ParsedStory, assets: Record<string, Asset>) => {
+    parsedStory = structuredClone(parsedStory);
+    parsedStory.metadata.assets ??= {};
+    Object.assign(parsedStory.metadata.assets, assets);
+
+    const storyJson = JSON.stringify(parsedStory);
+    const escapedStoryJson = storyJson.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = template.replace('"__PARSED_STORY__"', escapedStoryJson);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     return url;
@@ -26,13 +29,11 @@ export default function App() {
     const urls: string[] = [];
 
     const setupPage = async () => {
-      const response = await fetch("/template.html");
-      const templateHtml = await response.text();
       const template = compileTemplate(templateHtml);
 
       const { source, fileAssets } = await load();
-      const storyBody = parseStorySource(source);
-      const title = storyBody.metadata.title ?? "story";
+      const parsedStory = await parseStorySource(source);
+      const title = parsedStory.metadata.title ?? "story";
 
       const previewAssets: Record<string, Asset> = {};
       const downloadAssets: Record<string, Asset> = {};
@@ -54,8 +55,8 @@ export default function App() {
         urls.push(previewAssetUrl);
       }
 
-      const previewUrl = template(storyBody, previewAssets);
-      const downloadUrl = template(storyBody, downloadAssets);
+      const previewUrl = template(parsedStory, previewAssets);
+      const downloadUrl = template(parsedStory, downloadAssets);
       urls.push(previewUrl, downloadUrl);
 
       setPreviewUrl(previewUrl);

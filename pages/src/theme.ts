@@ -33,13 +33,13 @@ export const theme = EditorView.theme(
       backgroundColor: "transparent",
     },
     "& .cm-selectionBackground": {
-      backgroundColor: "var(--color-red-200) !important",
+      backgroundColor: "color-mix(in oklab, var(--color-red-500) 20%, transparent) !important",
     },
     "& .cm-matchingBracket": {
-      backgroundColor: "var(--color-amber-200) !important",
+      backgroundColor: "color-mix(in oklab, var(--color-amber-500) 20%, transparent) !important",
     },
     "& .cm-selectionMatch": {
-      backgroundColor: "var(--color-green-200) !important",
+      backgroundColor: "color-mix(in oklab, var(--color-green-500) 20%, transparent) !important",
     },
   },
   { dark: false }

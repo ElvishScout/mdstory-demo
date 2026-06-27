@@ -30,7 +30,7 @@ export const compress = async ({ source, fileAssets }: { source: string; fileAss
       });
       manifest.assets[`${assetsDir}/${id}`] = { alias, name: file.name };
       assets[id] = data;
-    })
+    }),
   );
 
   const textEncoder = new TextEncoder();
@@ -40,13 +40,13 @@ export const compress = async ({ source, fileAssets }: { source: string; fileAss
     [assetsDir]: assets,
   };
 
-  const archiveData = await new Promise<Uint8Array>((resolve, reject) => {
+  const archiveData = await new Promise<Uint8Array<ArrayBuffer>>((resolve, reject) => {
     zip(structure, {}, (err, data) => {
       if (err) {
         reject(err);
         return;
       }
-      resolve(data);
+      resolve(data as Uint8Array<ArrayBuffer>);
     });
   });
 
@@ -82,10 +82,10 @@ export const decompress = async (archive: File) => {
   const source = textDecoder.decode(unzipped[entryPath]);
   const fileAssets = Object.fromEntries(
     Object.entries(assetsMap).map(([path, { alias, name }]) => {
-      const fileData = unzipped[path];
+      const fileData = unzipped[path] as Uint8Array<ArrayBuffer>;
       const file = new File([fileData], name);
       return [alias, file];
-    })
+    }),
   );
   return { source, fileAssets };
 };
