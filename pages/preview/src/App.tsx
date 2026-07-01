@@ -10,9 +10,9 @@ const compileTemplate = (template: string) => {
     parsedStory.metadata.assets ??= {};
     Object.assign(parsedStory.metadata.assets, assets);
 
-    const storyJson = JSON.stringify(parsedStory);
-    const escapedStoryJson = storyJson.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = template.replace('"__PARSED_STORY__"', escapedStoryJson);
+    const html = template
+      .replace('"__PARSED_STORY__"', JSON.stringify(parsedStory))
+      .replace('"__TEMPLATE_OPTIONS__"', JSON.stringify({ debug: true }));
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     return url;
