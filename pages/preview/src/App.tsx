@@ -1,5 +1,5 @@
 import { Asset, ParsedStory, parseStorySource } from "@elvishscout/mdstory";
-import templateHtml from "@elvishscout/mdstory/html-template/dist/index.html?raw";
+import templateHtml from "@elvishscout/mdstory/templates/default/dist/index.html?raw";
 import { SyntheticEvent, useEffect, useState } from "react";
 
 import { load } from "@/utils/save-load";
