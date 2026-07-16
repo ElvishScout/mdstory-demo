@@ -1,5 +1,5 @@
 import { Asset, ParsedStory, parseStorySource } from "@elvishscout/mdstory";
-import templateHtml from "@elvishscout/mdstory/templates/default/dist/index.html?raw";
+import templateUrl from "@elvishscout/mdstory/templates/default/dist/index.html?url";
 import { SyntheticEvent, useEffect, useState } from "react";
 
 import { load } from "@/utils/save-load";
@@ -29,6 +29,7 @@ export default function App() {
     const urls: string[] = [];
 
     const setupPage = async () => {
+      const templateHtml = await (await fetch(templateUrl)).text();
       const template = compileTemplate(templateHtml);
 
       const { source, fileAssets } = await load();

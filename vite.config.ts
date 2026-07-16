@@ -106,11 +106,8 @@ export default defineConfig({
           if (id.match(/\/zod(\/|$)/)) {
             return "zod";
           }
-          // if (id.match(/\/markdown-it(-.*?)?(\/|$)/)) {
-          //   return "markdown-it";
-          // }
-          if (id.match(/\/mdstory\/html-template(\/|$)/)) {
-            return "template";
+          if (id.match(/\/markdown-it(-.*?)?(\/|$)/)) {
+            return "markdown-it";
           }
           if (id.match(/\/mdstory(\/|$)/)) {
             return "mdstory";
