@@ -5,14 +5,15 @@ import { SyntheticEvent, useEffect, useState } from "react";
 import { load } from "@/utils/save-load";
 
 const compileTemplate = (template: string) => {
-  return (parsedStory: ParsedStory, assets: Record<string, Asset>) => {
+  return (parsedStory: ParsedStory, assets: Record<string, Asset>, options?: Record<string, unknown>) => {
     parsedStory = structuredClone(parsedStory);
+    options ??= {};
     parsedStory.metadata.assets ??= {};
     Object.assign(parsedStory.metadata.assets, assets);
 
     const html = template
       .replace('"__PARSED_STORY__"', JSON.stringify(parsedStory))
-      .replace('"__TEMPLATE_OPTIONS__"', JSON.stringify({ debug: true }));
+      .replace('"__TEMPLATE_OPTIONS__"', JSON.stringify({ debug: true, ...options }));
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     return url;
@@ -56,7 +57,7 @@ export default function App() {
         urls.push(previewAssetUrl);
       }
 
-      const previewUrl = template(parsedStory, previewAssets);
+      const previewUrl = template(parsedStory, previewAssets, { showHeader: true });
       const downloadUrl = template(parsedStory, downloadAssets);
       urls.push(previewUrl, downloadUrl);
 
@@ -101,9 +102,9 @@ export default function App() {
 
   return (
     <div className="w-screen h-screen flex flex-col">
-      <div className="px-4 py-2 flex justify-center border-b-2 border-red-700">
+      <div className="fixed bottom-4 right-4 z-50 px-3 py-2 rounded-lg shadow-lg bg-white border border-red-700">
         <a
-          className="button-text"
+          className="button-text text-sm"
           href={downloadUrl}
           download={downloadName}
           onClick={ready ? undefined : (ev) => ev.preventDefault()}
