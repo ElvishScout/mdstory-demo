@@ -13,7 +13,7 @@ const compileTemplate = (template: string) => {
 
     const html = template
       .replace('"__PARSED_STORY__"', JSON.stringify(parsedStory))
-      .replace('"__TEMPLATE_OPTIONS__"', JSON.stringify({ debug: true, ...options }));
+      .replace('"__TEMPLATE_OPTIONS__"', JSON.stringify(options));
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     return url;
@@ -57,8 +57,8 @@ export default function App() {
         urls.push(previewAssetUrl);
       }
 
-      const previewUrl = template(parsedStory, previewAssets, { showHeader: true });
-      const downloadUrl = template(parsedStory, downloadAssets);
+      const previewUrl = template(parsedStory, previewAssets, { showHeader: true, debug: true });
+      const downloadUrl = template(parsedStory, downloadAssets, { showHeader: true });
       urls.push(previewUrl, downloadUrl);
 
       setPreviewUrl(previewUrl);
