@@ -29,16 +29,13 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.match(/\/@codemirror\/(view|state)(\/|$)/)) {
-            return "cm-core";
+            return "codemirror-core";
           }
           if (id.match(/\/@codemirror(\/|$)/)) {
-            return "cm-ext";
+            return "codemirror-ext";
           }
-          if (id.match(/\/react(-.*?)?(\/|$)/)) {
+          if (id.match(/\/(react|react-dom)(\/|$)/)) {
             return "react";
-          }
-          if (id.match(/\/zod(\/|$)/)) {
-            return "zod";
           }
           if (id.match(/\/markdown-it(-.*?)?(\/|$)/)) {
             return "markdown-it";
