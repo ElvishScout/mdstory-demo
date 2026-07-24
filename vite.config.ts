@@ -22,10 +22,6 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
     rollupOptions: {
-      input: {
-        main: path.resolve(root, "index.html"),
-        preview: path.resolve(root, "preview/index.html"),
-      },
       output: {
         manualChunks(id) {
           if (id.match(/\/@codemirror\/(view|state)(\/|$)/)) {

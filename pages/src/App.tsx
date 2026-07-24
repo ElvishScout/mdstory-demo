@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
+import { useRef, useState, useEffect, useCallback, ChangeEvent, KeyboardEvent, SyntheticEvent } from "react";
 import { produce } from "immer";
 import { LanguageDescription, LanguageSupport, indentUnit } from "@codemirror/language";
 import { markdown } from "@codemirror/lang-markdown";
@@ -6,10 +6,11 @@ import { yamlFrontmatter } from "@codemirror/lang-yaml";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
 import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 
-import { save, load } from "@/utils/save-load";
-import { compress, decompress } from "@/utils/zip";
+import { save, load } from "@/pages/lib/save-load";
+import { compress, decompress } from "@/pages/lib/zip";
 import { theme, highlight } from "./theme";
 import { markdownHandlebars } from "./extension";
+import { buildPreview, PreviewResult } from "./preview";
 
 type AssetEntry = {
   alias: string;
@@ -24,11 +25,16 @@ export default function App() {
   const inputArchive = useRef<HTMLInputElement>(null);
   const anchorArchive = useRef<HTMLAnchorElement>(null);
   const sourceRef = useRef("");
+  const buildSeq = useRef(0);
 
   const [assetList, setAssetList] = useState<AssetEntry[]>([]);
+  const [assetsOpen, setAssetsOpen] = useState(false);
   const [tabSize, setTabSize] = useState(2);
   const [wrapText, setWrapText] = useState(true);
   const [source, setSource] = useState("");
+  const [preview, setPreview] = useState<PreviewResult | null>(null);
+  const [previewError, setPreviewError] = useState("");
+  const [previewStale, setPreviewStale] = useState(true);
 
   const extensions = [
     theme,
@@ -62,6 +68,54 @@ export default function App() {
       setAssetList(assetList);
     });
   }, []);
+
+  const refreshPreview = useCallback(async () => {
+    const seq = ++buildSeq.current;
+    const fileAssets = Object.fromEntries(assetList.map(({ alias, file }) => [alias, file]));
+
+    if (sourceRef.current.trim() === "") {
+      setPreview(null);
+      setPreviewError("");
+      setPreviewStale(false);
+      void save({ source: sourceRef.current, fileAssets });
+      return;
+    }
+
+    try {
+      const result = await buildPreview(sourceRef.current, fileAssets);
+      if (seq !== buildSeq.current) {
+        for (const url of result.urls) {
+          URL.revokeObjectURL(url);
+        }
+        return;
+      }
+      setPreview((old) => {
+        if (old) {
+          for (const url of old.urls) {
+            URL.revokeObjectURL(url);
+          }
+        }
+        return result;
+      });
+      setPreviewError("");
+    } catch (err) {
+      if (seq === buildSeq.current) {
+        setPreviewError("Error: " + (err instanceof Error ? err.message : String(err)));
+      }
+    } finally {
+      if (seq === buildSeq.current) {
+        setPreviewStale(false);
+      }
+    }
+    void save({ source: sourceRef.current, fileAssets });
+  }, [assetList]);
+
+  // Rebuild the preview (debounced) whenever the source or assets change.
+  useEffect(() => {
+    setPreviewStale(true);
+    const timer = setTimeout(() => void refreshPreview(), 800);
+    return () => clearTimeout(timer);
+  }, [source, assetList, refreshPreview]);
 
   const handleInputAssetsChange = (ev: ChangeEvent<HTMLInputElement>) => {
     const target = ev.currentTarget;
@@ -132,6 +186,7 @@ export default function App() {
       file,
       readonly: true,
     }));
+    sourceRef.current = source;
     setSource(source);
     setAssetList(assetList);
     target.value = "";
@@ -140,7 +195,7 @@ export default function App() {
   const handleButtonDownloadClick = async () => {
     const anchor = anchorArchive.current!;
     const fileAssets = Object.fromEntries(assetList.map(({ alias, file }) => [alias, file]));
-    const archive = await compress({ source, fileAssets });
+    const archive = await compress({ source: sourceRef.current, fileAssets });
     const objectUrl = URL.createObjectURL(archive);
     anchor.href = objectUrl;
     anchor.download = "download.zip";
@@ -148,108 +203,156 @@ export default function App() {
     URL.revokeObjectURL(objectUrl);
   };
 
-  const handleButtonPreviewClick = async () => {
-    const fileAssets = Object.fromEntries(assetList.map(({ alias, file }) => [alias, file]));
-    await save({ source: sourceRef.current, fileAssets });
-    window.open("/preview/", "_blank");
+  const handleIFrameLoad = (ev: SyntheticEvent<HTMLIFrameElement, Event>) => {
+    const frameWindow = ev.currentTarget.contentWindow!;
+    frameWindow.addEventListener("error", (ev) =>
+      setPreviewError("Error: " + (ev.error instanceof Error ? ev.error.message : String(ev.error))),
+    );
+    frameWindow.addEventListener("unhandledrejection", (ev) =>
+      setPreviewError("Error: " + (ev.reason instanceof Error ? ev.reason.message : String(ev.reason))),
+    );
   };
 
   return (
-    <div className="w-screen h-screen p-4 flex flex-col">
-      <div className="relative mb-2 grid grid-cols-[1fr_auto_1fr] gap-2 items-baseline">
-        <span></span>
-        <h1 className="text-3xl">Source Editor</h1>
-        <span>
-          <a className="button-text text-lg" target="_blank" href={import.meta.env.VITE_GITHUB}>
+    <div className="w-screen h-screen flex flex-col bg-slate-100 text-slate-800">
+      <header className="shrink-0 h-12 px-4 flex items-center gap-2 bg-slate-900 text-white shadow-md z-10">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+          <h1 className="text-sm font-semibold tracking-wide">MDStory</h1>
+        </div>
+        <div className="ml-auto flex items-center gap-1">
+          <label className="flex items-center gap-1.5 px-2 text-xs text-slate-400">
+            Tab
+            <select
+              className="bg-transparent text-slate-200 cursor-pointer"
+              value={tabSize}
+              onChange={(ev) => setTabSize(parseInt(ev.currentTarget.value))}
+            >
+              {tabSizeOptions.map((value, i) => (
+                <option key={i} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="btn-dark" type="button" onClick={() => setWrapText((value) => !value)}>
+            Wrap: {wrapText ? "On" : "Off"}
+          </button>
+          <span className="w-px h-4 mx-1 bg-white/15"></span>
+          <input ref={inputArchive} className="hidden" type="file" onChange={handleInputArchiveChange} />
+          <button className="btn-dark" type="button" onClick={() => inputArchive.current!.click()}>
+            Open Zip
+          </button>
+          <a ref={anchorArchive} className="hidden"></a>
+          <button className="btn-dark" type="button" onClick={handleButtonDownloadClick}>
+            Save Zip
+          </button>
+          <a className="btn-dark" target="_blank" href={import.meta.env.VITE_GITHUB}>
             GitHub
           </a>
-        </span>
-      </div>
-      <div className="grow flex gap-2 flex-col sm:flex-row overflow-hidden">
-        <div className="sm:grow sm:basis-0 sm:min-w-64 flex flex-col">
-          <label className="peer">
-            <div className="px-2 py-1 flex justify-between has-checked:border-b-2 sm:border-none border-red-700">
-              <input className="peer hidden" type="checkbox" defaultChecked />
-              <span>Assets</span>
-              <input className="hidden" ref={inputAssets} type="file" multiple onChange={handleInputAssetsChange} />
-              <button
-                className="button-text peer-checked:hidden peer-checked:sm:block"
-                type="button"
-                onClick={() => inputAssets.current!.click()}
-              >
-                Upload
-              </button>
-            </div>
-          </label>
-          <div className="peer-has-checked:hidden peer-has-checked:sm:block sm:grow px-2 py-2 h-32 border-2 border-red-700 space-y-2 overflow-auto">
-            {assetList.map(({ alias, file, readonly }, i) => {
-              return (
-                <div key={i} className="flex gap-2 text-sm">
-                  <input
-                    className="grow basis-0 min-w-0 px-1 border-b border-red-700 read-only:bg-red-100"
-                    type="text"
-                    value={alias}
-                    readOnly={readonly}
-                    onDoubleClick={() => handleInputAliasDoubleClick(i)}
-                    onKeyDown={(ev) => handleInputAliasKeyDown(i, ev)}
-                    onBlur={() => handleInputAliasBlur(i)}
-                    onChange={(ev) => handleInputAliasChange(i, ev)}
-                  />
-                  <div className="grow basis-0 min-w-0 text-gray-500 overflow-hidden text-ellipsis text-nowrap">
-                    {file.name}
-                  </div>
-                  <button className="button-text" onClick={() => handleButtonDeleteClick(i)}>
-                    Delete
-                  </button>
-                </div>
-              );
-            })}
-          </div>
         </div>
-        <div className="grow-3 basis-0 flex flex-col overflow-hidden">
-          <div className="px-2 py-1 flex gap-x-4">
-            <label className="text-nowrap">
-              <span>Tab Size</span>
-              <select
-                className="w-12 text-center cursor-pointer"
-                value={tabSize}
-                onChange={(ev) => setTabSize(parseInt(ev.currentTarget.value))}
-              >
-                {tabSizeOptions.map((value, i) => (
-                  <option key={i} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="text-nowrap button-text" onClick={() => setWrapText((value) => !value)}>
-              <span>Wrap Text </span>
-              <span>{wrapText ? <>On</> : <>Off</>}</span>
-            </button>
-            <input ref={inputArchive} className="hidden" type="file" onChange={handleInputArchiveChange} />
-            <button className="button-text ml-auto" type="button" onClick={() => inputArchive.current!.click()}>
-              Upload
-            </button>
-            <a ref={anchorArchive} className="hidden"></a>
-            <button className="button-text" type="button" onClick={handleButtonDownloadClick}>
-              Download
-            </button>
-            <button className="button-text" type="button" onClick={handleButtonPreviewClick}>
-              Preview
+      </header>
+
+      <main className="grow flex flex-col md:flex-row overflow-hidden">
+        <section className="md:w-1/2 h-1/2 md:h-auto flex flex-col min-h-0 border-b md:border-b-0 md:border-r border-slate-200">
+          <div className="shrink-0 px-3 h-9 flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Source</span>
+            <button className="btn-ghost" type="button" onClick={() => setAssetsOpen((value) => !value)}>
+              Assets ({assetList.length}) {assetsOpen ? "▾" : "▸"}
             </button>
           </div>
-          <div className="relative grow border-2 border-red-700 text-sm resize-none overflow-hidden">
+          <div className="relative grow min-h-0 mx-3 mb-3 rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden text-sm">
             <CodeMirror
               className="w-full h-full"
               width="100%"
               height="100%"
               extensions={extensions}
               value={source}
-              onChange={(value) => (sourceRef.current = value)}
+              onChange={(value) => {
+                sourceRef.current = value;
+                setSource(value);
+              }}
             />
           </div>
-        </div>
-      </div>
+          {assetsOpen && (
+            <div className="shrink-0 mx-3 mb-3 max-h-48 overflow-auto panel">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+                <span className="text-xs font-medium text-slate-500">Assets</span>
+                <input className="hidden" ref={inputAssets} type="file" multiple onChange={handleInputAssetsChange} />
+                <button className="btn-ghost" type="button" onClick={() => inputAssets.current!.click()}>
+                  Upload
+                </button>
+              </div>
+              {assetList.length === 0 ? (
+                <p className="px-3 py-3 text-xs text-slate-400">No assets uploaded.</p>
+              ) : (
+                <ul className="p-2 space-y-1">
+                  {assetList.map(({ alias, file, readonly }, i) => (
+                    <li key={i} className="flex items-center gap-2 px-1 py-1 rounded-md hover:bg-slate-50">
+                      <input
+                        className={
+                          "w-44 shrink-0 px-1.5 py-0.5 rounded border font-mono text-xs " +
+                          (readonly ? "border-transparent bg-transparent" : "border-indigo-300 bg-white")
+                        }
+                        type="text"
+                        value={alias}
+                        readOnly={readonly}
+                        title="Double-click to rename"
+                        onDoubleClick={() => handleInputAliasDoubleClick(i)}
+                        onKeyDown={(ev) => handleInputAliasKeyDown(i, ev)}
+                        onBlur={() => handleInputAliasBlur(i)}
+                        onChange={(ev) => handleInputAliasChange(i, ev)}
+                      />
+                      <span className="grow min-w-0 truncate text-xs text-slate-400">{file.name}</span>
+                      <button
+                        className="shrink-0 w-6 h-6 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
+                        type="button"
+                        title="Delete"
+                        onClick={() => handleButtonDeleteClick(i)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="md:w-1/2 h-1/2 md:h-auto flex flex-col min-h-0">
+          <div className="shrink-0 px-3 h-9 flex items-center justify-between">
+            <span className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              Preview
+              {previewStale && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>}
+            </span>
+            <div className="flex items-center gap-1">
+              <button className="btn-ghost" type="button" onClick={() => void refreshPreview()}>
+                Refresh
+              </button>
+              {preview && (
+                <a className="btn-ghost" href={preview.downloadUrl} download={preview.downloadName}>
+                  Export HTML
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="relative grow min-h-0 mx-3 mb-3 rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+            {preview ? (
+              <iframe className="w-full h-full" src={preview.previewUrl} onLoad={handleIFrameLoad} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-slate-400">
+                {previewStale ? "Building preview…" : "Start writing to see the preview."}
+              </div>
+            )}
+            {previewError && (
+              <div className="absolute inset-x-3 bottom-3 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs shadow-sm wrap-break-word">
+                {previewError}
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

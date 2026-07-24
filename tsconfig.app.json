@@ -32,7 +32,7 @@
   },
   "include": [
     "pages",
-    "utils",
+    "pages/lib",
     "components"
   ]
 }
