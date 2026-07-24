@@ -166,9 +166,9 @@ export default function App() {
         </span>
       </div>
       <div className="grow flex gap-2 flex-col sm:flex-row overflow-hidden">
-        <div className="sm:grow-[1] sm:basis-0 sm:min-w-64 flex flex-col">
+        <div className="sm:grow sm:basis-0 sm:min-w-64 flex flex-col">
           <label className="peer">
-            <div className="px-2 py-1 flex justify-between has-[:checked]:border-b-2 sm:border-none border-red-700">
+            <div className="px-2 py-1 flex justify-between has-checked:border-b-2 sm:border-none border-red-700">
               <input className="peer hidden" type="checkbox" defaultChecked />
               <span>Assets</span>
               <input className="hidden" ref={inputAssets} type="file" multiple onChange={handleInputAssetsChange} />
@@ -181,7 +181,7 @@ export default function App() {
               </button>
             </div>
           </label>
-          <div className="peer-has-[:checked]:hidden peer-has-[:checked]:sm:block sm:grow px-2 py-2 h-32 border-2 border-red-700 space-y-2 overflow-auto">
+          <div className="peer-has-checked:hidden peer-has-checked:sm:block sm:grow px-2 py-2 h-32 border-2 border-red-700 space-y-2 overflow-auto">
             {assetList.map(({ alias, file, readonly }, i) => {
               return (
                 <div key={i} className="flex gap-2 text-sm">
@@ -195,7 +195,7 @@ export default function App() {
                     onBlur={() => handleInputAliasBlur(i)}
                     onChange={(ev) => handleInputAliasChange(i, ev)}
                   />
-                  <div className="grow basis-0 min-w-0 text-gray-500 overflow-hidden overflow-ellipsis text-nowrap">
+                  <div className="grow basis-0 min-w-0 text-gray-500 overflow-hidden text-ellipsis text-nowrap">
                     {file.name}
                   </div>
                   <button className="button-text" onClick={() => handleButtonDeleteClick(i)}>
@@ -206,7 +206,7 @@ export default function App() {
             })}
           </div>
         </div>
-        <div className="grow-[3] basis-0 flex flex-col overflow-hidden">
+        <div className="grow-3 basis-0 flex flex-col overflow-hidden">
           <div className="px-2 py-1 flex gap-x-4">
             <label className="text-nowrap">
               <span>Tab Size</span>
