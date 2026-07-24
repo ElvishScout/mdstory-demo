@@ -24,18 +24,26 @@ export default function App() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadName, setDownloadName] = useState("");
-  const [ready, setReady] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
 
   useEffect(() => {
     const urls: string[] = [];
 
     const setupPage = async () => {
+      const { source, fileAssets } = await load();
+
+      let parsedStory;
+      try {
+        parsedStory = await parseStorySource(source);
+      } catch (err) {
+        handleError(err);
+        return;
+      }
+
+      const title = parsedStory.metadata.title ?? "story";
       const templateHtml = await (await fetch(templateUrl)).text();
       const template = compileTemplate(templateHtml);
-
-      const { source, fileAssets } = await load();
-      const parsedStory = await parseStorySource(source);
-      const title = parsedStory.metadata.title ?? "story";
 
       const previewAssets: Record<string, Asset> = {};
       const downloadAssets: Record<string, Asset> = {};
@@ -64,7 +72,7 @@ export default function App() {
       setPreviewUrl(previewUrl);
       setDownloadUrl(downloadUrl);
       setDownloadName(`${title}.html`);
-      setReady(true);
+      setState("ready");
     };
     setupPage();
 
@@ -75,15 +83,19 @@ export default function App() {
     };
   }, []);
 
-  const handleFrameLoad = (ev: SyntheticEvent<HTMLIFrameElement, Event>) => {
+  const handleError = (error: any) => {
+    setErrorMessage("Error: " + (error instanceof Error ? error.message : String(error)));
+    setState("error");
+  };
+
+  const handleIFrameLoad = (ev: SyntheticEvent<HTMLIFrameElement, Event>) => {
     const frameWindow = ev.currentTarget.contentWindow!;
     const frameDocument = ev.currentTarget.contentDocument!;
     const frameTitle = frameDocument.head.querySelector("title");
     const frameIcon = frameDocument.head.querySelector<HTMLLinkElement>("link[rel=icon]");
 
-    frameWindow.addEventListener("error", (ev) => {
-      console.error(ev.error);
-    });
+    frameWindow.addEventListener("error", (ev) => handleError(ev.error));
+    frameWindow.addEventListener("unhandledrejection", (ev) => handleError(ev.reason));
 
     if (frameTitle) {
       document.title = frameTitle.innerText;
@@ -102,17 +114,18 @@ export default function App() {
 
   return (
     <div className="w-screen h-screen flex flex-col">
-      <div className="fixed bottom-4 right-4 z-50 px-3 py-2 rounded-lg shadow-lg bg-white border border-red-700">
-        <a
-          className="button-text text-sm"
-          href={downloadUrl}
-          download={downloadName}
-          onClick={ready ? undefined : (ev) => ev.preventDefault()}
-        >
-          {ready ? <>Download Standalone HTML</> : <>Loading</>}
-        </a>
+      <div className="fixed bottom-4 right-4 z-50 max-w-64 px-3 py-2 rounded-lg shadow-lg bg-white border border-red-700">
+        <p className="text-sm wrap-break-word">
+          {state === "ready" && (
+            <a className="button-text" href={downloadUrl} download={downloadName}>
+              Download Standalone HTML
+            </a>
+          )}
+          {state === "loading" && <span className="text-red-600">Loading</span>}
+          {state === "error" && <span className="text-red-600">{errorMessage}</span>}
+        </p>
       </div>
-      <iframe className="grow" src={previewUrl || undefined} onLoad={handleFrameLoad} />
+      <iframe className="grow" src={previewUrl || undefined} onLoad={handleIFrameLoad} />
     </div>
   );
 }
