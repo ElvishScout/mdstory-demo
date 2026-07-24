@@ -72,7 +72,7 @@ export default function App() {
     setAssetList(
       produce((draft) => {
         draft.push(...newAssets);
-      })
+      }),
     );
     target.value = "";
   };
@@ -81,7 +81,7 @@ export default function App() {
     setAssetList(
       produce((draft) => {
         draft[i].readonly = false;
-      })
+      }),
     );
   };
 
@@ -90,7 +90,7 @@ export default function App() {
       setAssetList(
         produce((draft) => {
           draft[i].readonly = true;
-        })
+        }),
       );
     }
   };
@@ -99,7 +99,7 @@ export default function App() {
     setAssetList(
       produce((draft) => {
         draft[i].readonly = true;
-      })
+      }),
     );
   };
 
@@ -108,7 +108,7 @@ export default function App() {
     setAssetList(
       produce((draft) => {
         draft[i].alias = value;
-      })
+      }),
     );
   };
 
@@ -116,7 +116,7 @@ export default function App() {
     setAssetList(
       produce((draft) => {
         draft.splice(i, 1);
-      })
+      }),
     );
   };
 
@@ -207,40 +207,36 @@ export default function App() {
           </div>
         </div>
         <div className="grow-[3] basis-0 flex flex-col overflow-hidden">
-          <div className="px-2 py-1 flex justify-between">
-            <div className="space-x-4">
-              <label className="text-nowrap">
-                <span>Tab Size</span>
-                <select
-                  className="w-12 text-center cursor-pointer"
-                  value={tabSize}
-                  onChange={(ev) => setTabSize(parseInt(ev.currentTarget.value))}
-                >
-                  {tabSizeOptions.map((value, i) => (
-                    <option key={i} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button className="text-nowrap button-text" onClick={() => setWrapText((value) => !value)}>
-                <span>Wrap Text </span>
-                <span>{wrapText ? <>On</> : <>Off</>}</span>
-              </button>
-            </div>
-            <div className="space-x-2">
-              <input ref={inputArchive} className="hidden" type="file" onChange={handleInputArchiveChange} />
-              <button className="button-text" type="button" onClick={() => inputArchive.current!.click()}>
-                Upload
-              </button>
-              <a ref={anchorArchive} className="hidden"></a>
-              <button className="button-text" type="button" onClick={handleButtonDownloadClick}>
-                Download
-              </button>
-              <button className="button-text" type="button" onClick={handleButtonPreviewClick}>
-                Preview
-              </button>
-            </div>
+          <div className="px-2 py-1 flex gap-x-4">
+            <label className="text-nowrap">
+              <span>Tab Size</span>
+              <select
+                className="w-12 text-center cursor-pointer"
+                value={tabSize}
+                onChange={(ev) => setTabSize(parseInt(ev.currentTarget.value))}
+              >
+                {tabSizeOptions.map((value, i) => (
+                  <option key={i} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="text-nowrap button-text" onClick={() => setWrapText((value) => !value)}>
+              <span>Wrap Text </span>
+              <span>{wrapText ? <>On</> : <>Off</>}</span>
+            </button>
+            <input ref={inputArchive} className="hidden" type="file" onChange={handleInputArchiveChange} />
+            <button className="button-text ml-auto" type="button" onClick={() => inputArchive.current!.click()}>
+              Upload
+            </button>
+            <a ref={anchorArchive} className="hidden"></a>
+            <button className="button-text" type="button" onClick={handleButtonDownloadClick}>
+              Download
+            </button>
+            <button className="button-text" type="button" onClick={handleButtonPreviewClick}>
+              Preview
+            </button>
           </div>
           <div className="relative grow border-2 border-red-700 text-sm resize-none overflow-hidden">
             <CodeMirror
