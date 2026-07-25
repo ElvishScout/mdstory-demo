@@ -12,8 +12,7 @@ export type PreviewResult = {
 const compileTemplate = (template: string) => {
   return (parsedStory: ParsedStory, assets: Record<string, Asset>, options?: Record<string, unknown>) => {
     parsedStory = structuredClone(parsedStory);
-    parsedStory.metadata.assets ??= {};
-    Object.assign(parsedStory.metadata.assets, assets);
+    parsedStory.metadata.assets = { ...parsedStory.metadata.assets, ...assets };
 
     const html = injectTemplateData(template, parsedStory, options);
     const blob = new Blob([html], { type: "text/html" });

@@ -18,6 +18,14 @@ type AssetEntry = {
   readonly: boolean;
 };
 
+const toValidIdentifier = (name: string) => {
+  const identifier = name
+    .replace(/\.[^.]+$/, "")
+    .replace(/[-+*/\\%^&|~=!?<>()[\]{}'"`;:,.@#$\s]/g, "_")
+    .replace(/^(\p{N})/u, "_$1");
+  return identifier || "asset";
+};
+
 export default function App() {
   const tabSizeOptions = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -122,7 +130,19 @@ export default function App() {
     if (!target.files) {
       return;
     }
-    const newAssets = Array.from(target.files).map((file): AssetEntry => ({ alias: file.name, file, readonly: true }));
+    const used = new Set(assetList.map((entry) => entry.alias));
+    const newAssets = Array.from(target.files).map((file): AssetEntry => {
+      let alias = toValidIdentifier(file.name);
+      if (used.has(alias)) {
+        let suffix = 2;
+        while (used.has(`${alias}_${suffix}`)) {
+          suffix++;
+        }
+        alias = `${alias}_${suffix}`;
+      }
+      used.add(alias);
+      return { alias, file, readonly: true };
+    });
     setAssetList(
       produce((draft) => {
         draft.push(...newAssets);
@@ -139,22 +159,31 @@ export default function App() {
     );
   };
 
+  const finalizeAlias = (i: number) => {
+    setAssetList(
+      produce((draft) => {
+        const entry = draft[i];
+        entry.readonly = true;
+        const taken = new Set(draft.filter((_, j) => j !== i).map((other) => other.alias));
+        if (taken.has(entry.alias)) {
+          let suffix = 2;
+          while (taken.has(`${entry.alias}_${suffix}`)) {
+            suffix++;
+          }
+          entry.alias = `${entry.alias}_${suffix}`;
+        }
+      }),
+    );
+  };
+
   const handleInputAliasKeyDown = (i: number, ev: KeyboardEvent<HTMLInputElement>) => {
     if (ev.key === "Enter") {
-      setAssetList(
-        produce((draft) => {
-          draft[i].readonly = true;
-        }),
-      );
+      finalizeAlias(i);
     }
   };
 
   const handleInputAliasBlur = (i: number) => {
-    setAssetList(
-      produce((draft) => {
-        draft[i].readonly = true;
-      }),
-    );
+    finalizeAlias(i);
   };
 
   const handleInputAliasChange = (i: number, ev: ChangeEvent<HTMLInputElement>) => {
