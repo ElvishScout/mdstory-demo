@@ -160,17 +160,11 @@ export default function App() {
     try {
       const result = await buildPreview(sourceRef.current, fileAssets);
       if (seq !== buildSeq.current) {
-        for (const url of result.urls) {
-          URL.revokeObjectURL(url);
-        }
+        result.dispose();
         return;
       }
       setPreview((old) => {
-        if (old) {
-          for (const url of old.urls) {
-            URL.revokeObjectURL(url);
-          }
-        }
+        old?.dispose();
         return result;
       });
       setPreviewError("");

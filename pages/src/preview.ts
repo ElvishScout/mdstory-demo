@@ -5,8 +5,8 @@ export type PreviewResult = {
   previewUrl: string;
   downloadUrl: string;
   downloadName: string;
-  /** All object URLs created during the build; revoke when replaced. */
-  urls: string[];
+  /** Revoke all object URLs created during the build. */
+  dispose: () => void;
 };
 
 const compileTemplate = (template: string) => {
@@ -21,20 +21,15 @@ const compileTemplate = (template: string) => {
   };
 };
 
-let templatePromise: Promise<ReturnType<typeof compileTemplate>> | null = null;
-
-const getTemplate = () => {
-  templatePromise ??= (async () => {
-    const templateHtml = await (await fetch(templateUrl)).text();
-    return compileTemplate(templateHtml);
-  })();
-  return templatePromise;
-};
+const templatePromise = (async () => {
+  const templateHtml = await (await fetch(templateUrl)).text();
+  return compileTemplate(templateHtml);
+})();
 
 export const buildPreview = async (source: string, fileAssets: Record<string, File>): Promise<PreviewResult> => {
   const parsedStory = await parseStorySource(source);
   const title = parsedStory.metadata.title ?? "story";
-  const template = await getTemplate();
+  const template = await templatePromise;
 
   const urls: string[] = [];
   const previewAssets: Record<string, Asset> = {};
@@ -60,5 +55,14 @@ export const buildPreview = async (source: string, fileAssets: Record<string, Fi
   const downloadUrl = template(parsedStory, downloadAssets);
   urls.push(previewUrl, downloadUrl);
 
-  return { previewUrl, downloadUrl, downloadName: `${title}.html`, urls };
+  return {
+    previewUrl,
+    downloadUrl,
+    downloadName: `${title}.html`,
+    dispose: () => {
+      for (const url of urls) {
+        URL.revokeObjectURL(url);
+      }
+    },
+  };
 };
