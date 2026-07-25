@@ -240,7 +240,7 @@ export default function App() {
     <div className="w-screen h-screen flex flex-col bg-slate-100 text-slate-800">
       <header className="shrink-0 h-12 px-4 flex items-center gap-2 bg-slate-900 text-white shadow-md z-10">
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+          <img className="w-5 h-5" src="/icon.png" alt="icon" />
           <h1 className="text-sm font-semibold tracking-wide">MDStory</h1>
         </div>
         <div className="ml-auto flex items-center gap-1">
