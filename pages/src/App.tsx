@@ -33,6 +33,8 @@ export default function App() {
   const anchorArchive = useRef<HTMLAnchorElement>(null);
   const sourceRef = useRef("");
   const buildSeq = useRef(0);
+  const viewRef = useRef<EditorView | null>(null);
+  const assetListRef = useRef<AssetEntry[]>([]);
 
   const [assetList, setAssetList] = useState<AssetEntry[]>([]);
   const [editingAlias, setEditingAlias] = useState<number | null>(null);
@@ -44,11 +46,66 @@ export default function App() {
   const [previewError, setPreviewError] = useState("");
   const [previewStale, setPreviewStale] = useState(true);
 
+  const addAssetFiles = (files: File[]): AssetEntry[] => {
+    const used = new Set(assetListRef.current.map((entry) => entry.alias));
+    const newAssets = files.map((file): AssetEntry => {
+      let alias = toValidIdentifier(file.name);
+      if (used.has(alias)) {
+        let suffix = 2;
+        while (used.has(`${alias}_${suffix}`)) {
+          suffix++;
+        }
+        alias = `${alias}_${suffix}`;
+      }
+      used.add(alias);
+      return { alias, file };
+    });
+    const next = [...assetListRef.current, ...newAssets];
+    assetListRef.current = next;
+    setAssetList(next);
+    return newAssets;
+  };
+
+  const insertAssetEmbeds = (files: File[], pos: number | null) => {
+    const view = viewRef.current;
+    if (!view || files.length === 0) {
+      return;
+    }
+    const newAssets = addAssetFiles(files);
+    const text = newAssets.map(({ alias }) => `{{embed ${alias}}}`).join("\n");
+    const at = pos ?? view.state.selection.main.head;
+    view.dispatch({
+      changes: { from: at, insert: text },
+      selection: { anchor: at + text.length },
+    });
+    view.focus();
+  };
+
   const extensions = [
     theme,
     highlight,
     indentUnit.of(" ".repeat(tabSize)),
     wrapText ? EditorView.lineWrapping : [],
+    EditorView.domEventHandlers({
+      drop(event, view) {
+        const files = Array.from(event.dataTransfer?.files ?? []);
+        if (files.length === 0) {
+          return;
+        }
+        event.preventDefault();
+        insertAssetEmbeds(files, view.posAtCoords({ x: event.clientX, y: event.clientY }));
+        return true;
+      },
+      paste(event, view) {
+        const files = Array.from(event.clipboardData?.files ?? []);
+        if (files.length === 0) {
+          return;
+        }
+        event.preventDefault();
+        insertAssetEmbeds(files, view.state.selection.main.head);
+        return true;
+      },
+    }),
     yamlFrontmatter({
       content: markdown({
         codeLanguages: [
@@ -75,6 +132,12 @@ export default function App() {
       setAssetList(assetList);
     });
   }, []);
+
+  // Keep a synchronous mirror of the asset list for handlers that run
+  // outside React's render cycle (editor drop/paste).
+  useEffect(() => {
+    assetListRef.current = assetList;
+  }, [assetList]);
 
   const refreshPreview = useCallback(async () => {
     const seq = ++buildSeq.current;
@@ -129,24 +192,7 @@ export default function App() {
     if (!target.files) {
       return;
     }
-    const used = new Set(assetList.map((entry) => entry.alias));
-    const newAssets = Array.from(target.files).map((file): AssetEntry => {
-      let alias = toValidIdentifier(file.name);
-      if (used.has(alias)) {
-        let suffix = 2;
-        while (used.has(`${alias}_${suffix}`)) {
-          suffix++;
-        }
-        alias = `${alias}_${suffix}`;
-      }
-      used.add(alias);
-      return { alias, file };
-    });
-    setAssetList(
-      produce((draft) => {
-        draft.push(...newAssets);
-      }),
-    );
+    addAssetFiles(Array.from(target.files));
     target.value = "";
   };
 
@@ -291,6 +337,9 @@ export default function App() {
               height="100%"
               extensions={extensions}
               value={source}
+              onCreateEditor={(view) => {
+                viewRef.current = view;
+              }}
               onChange={(value) => {
                 sourceRef.current = value;
                 setSource(value);
