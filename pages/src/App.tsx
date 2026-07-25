@@ -8,6 +8,7 @@ import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 
 import { save, load } from "@/pages/lib/save-load";
 import { compress, decompress } from "@/pages/lib/zip";
+import exampleSource from "@/pages/lib/example.md?raw";
 import { theme, highlight } from "./theme";
 import { markdownHandlebars } from "./extension";
 import { buildPreview, PreviewResult } from "./preview";
@@ -124,7 +125,10 @@ export default function App() {
   ];
 
   useEffect(() => {
-    load().then(({ source, fileAssets }) => {
+    load().then(({ source: stored, fileAssets }) => {
+      // Seed the example story only when nothing was ever stored; an empty
+      // string counts as real content (the user cleared the editor).
+      const source = stored ?? exampleSource;
       const assetList = Object.entries(fileAssets).map(([alias, file]) => ({
         alias,
         file,

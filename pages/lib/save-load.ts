@@ -8,7 +8,8 @@ export const save = async ({ source, fileAssets }: { source: string; fileAssets:
 };
 
 export const load = async () => {
-  const source = (await kvStore.get<string>("source")) ?? "";
+  // null means nothing was ever stored; an empty string is real content.
+  const source = await kvStore.get<string>("source");
   const fileAssets = (await kvStore.get<Record<string, File>>("assets")) ?? {};
   return { source, fileAssets };
 };
