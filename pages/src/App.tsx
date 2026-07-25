@@ -15,7 +15,6 @@ import { buildPreview, PreviewResult } from "./preview";
 type AssetEntry = {
   alias: string;
   file: File;
-  readonly: boolean;
 };
 
 const toValidIdentifier = (name: string) => {
@@ -36,6 +35,7 @@ export default function App() {
   const buildSeq = useRef(0);
 
   const [assetList, setAssetList] = useState<AssetEntry[]>([]);
+  const [editingAlias, setEditingAlias] = useState<number | null>(null);
   const [assetsOpen, setAssetsOpen] = useState(false);
   const [tabSize, setTabSize] = useState(2);
   const [wrapText, setWrapText] = useState(true);
@@ -69,7 +69,6 @@ export default function App() {
       const assetList = Object.entries(fileAssets).map(([alias, file]) => ({
         alias,
         file,
-        readonly: true,
       }));
       sourceRef.current = source;
       setSource(source);
@@ -141,7 +140,7 @@ export default function App() {
         alias = `${alias}_${suffix}`;
       }
       used.add(alias);
-      return { alias, file, readonly: true };
+      return { alias, file };
     });
     setAssetList(
       produce((draft) => {
@@ -152,18 +151,14 @@ export default function App() {
   };
 
   const handleInputAliasDoubleClick = (i: number) => {
-    setAssetList(
-      produce((draft) => {
-        draft[i].readonly = false;
-      }),
-    );
+    setEditingAlias(i);
   };
 
   const finalizeAlias = (i: number) => {
+    setEditingAlias(null);
     setAssetList(
       produce((draft) => {
         const entry = draft[i];
-        entry.readonly = true;
         const taken = new Set(draft.filter((_, j) => j !== i).map((other) => other.alias));
         if (taken.has(entry.alias)) {
           let suffix = 2;
@@ -213,7 +208,6 @@ export default function App() {
     const assetList = Object.entries(fileAssets).map(([alias, file]) => ({
       alias,
       file,
-      readonly: true,
     }));
     sourceRef.current = source;
     setSource(source);
@@ -316,16 +310,16 @@ export default function App() {
                 <p className="px-3 py-3 text-xs text-slate-400">No assets uploaded.</p>
               ) : (
                 <ul className="p-2 space-y-1">
-                  {assetList.map(({ alias, file, readonly }, i) => (
+                  {assetList.map(({ alias, file }, i) => (
                     <li key={i} className="flex items-center gap-2 px-1 py-1 rounded-md hover:bg-slate-50">
                       <input
                         className={
                           "w-44 shrink-0 px-1.5 py-0.5 rounded border font-mono text-xs " +
-                          (readonly ? "border-transparent bg-transparent" : "border-indigo-300 bg-white")
+                          (editingAlias === i ? "border-indigo-300 bg-white" : "border-transparent bg-transparent")
                         }
                         type="text"
                         value={alias}
-                        readOnly={readonly}
+                        readOnly={editingAlias !== i}
                         title="Double-click to rename"
                         onDoubleClick={() => handleInputAliasDoubleClick(i)}
                         onKeyDown={(ev) => handleInputAliasKeyDown(i, ev)}
