@@ -21,6 +21,9 @@ export const theme = EditorView.theme(
     "& .cm-cursor": {
       borderLeftColor: "var(--color-indigo-600)",
     },
+    "& .cm-scroller": {
+      overscrollBehavior: "none",
+    },
     "& .cm-gutters": {
       color: "var(--color-slate-400)",
       backgroundColor: "var(--color-slate-50)",

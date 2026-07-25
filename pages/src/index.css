@@ -23,5 +23,5 @@
 }
 
 body {
-  @apply overscroll-none touch-manipulation;
+  @apply overflow-hidden overscroll-none touch-manipulation;
 }
