@@ -11,6 +11,7 @@ import { compress, decompress } from "@/pages/lib/zip";
 import { theme, highlight } from "./theme";
 import { markdownHandlebars } from "./extension";
 import { buildPreview, PreviewResult } from "./preview";
+import HelpDialog from "./HelpDialog";
 
 type AssetEntry = {
   alias: string;
@@ -39,6 +40,7 @@ export default function App() {
   const [assetList, setAssetList] = useState<AssetEntry[]>([]);
   const [editingAlias, setEditingAlias] = useState<number | null>(null);
   const [assetsOpen, setAssetsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [tabSize, setTabSize] = useState(2);
   const [wrapText, setWrapText] = useState(true);
   const [source, setSource] = useState("");
@@ -298,7 +300,7 @@ export default function App() {
               onChange={(ev) => setTabSize(parseInt(ev.currentTarget.value))}
             >
               {tabSizeOptions.map((value, i) => (
-                <option key={i} value={value}>
+                <option className="text-slate-800" key={i} value={value}>
                   {value}
                 </option>
               ))}
@@ -315,6 +317,14 @@ export default function App() {
           <a ref={anchorArchive} className="hidden"></a>
           <button className="btn-dark" type="button" onClick={handleButtonDownloadClick}>
             Save Zip
+          </button>
+          <button
+            className="btn-dark flex items-center gap-1"
+            type="button"
+            title="Quick reference"
+            onClick={() => setHelpOpen(true)}
+          >
+            Help
           </button>
           <a className="btn-dark" target="_blank" href={import.meta.env.VITE_GITHUB}>
             GitHub
@@ -425,6 +435,8 @@ export default function App() {
           </div>
         </section>
       </main>
+
+      {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
     </div>
   );
 }
