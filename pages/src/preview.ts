@@ -1,4 +1,4 @@
-import { Asset, ParsedStory, parseStorySource } from "@elvishscout/mdstory";
+import { Asset, injectTemplateData, ParsedStory, parseStorySource } from "@elvishscout/mdstory";
 import templateUrl from "@elvishscout/mdstory/templates/default/dist/index.html?url";
 
 export type PreviewResult = {
@@ -12,13 +12,10 @@ export type PreviewResult = {
 const compileTemplate = (template: string) => {
   return (parsedStory: ParsedStory, assets: Record<string, Asset>, options?: Record<string, unknown>) => {
     parsedStory = structuredClone(parsedStory);
-    options ??= {};
     parsedStory.metadata.assets ??= {};
     Object.assign(parsedStory.metadata.assets, assets);
 
-    const html = template
-      .replace('"__PARSED_STORY__"', JSON.stringify(parsedStory))
-      .replace('"__TEMPLATE_OPTIONS__"', JSON.stringify(options));
+    const html = injectTemplateData(template, parsedStory, options);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     return url;
@@ -60,8 +57,8 @@ export const buildPreview = async (source: string, fileAssets: Record<string, Fi
     urls.push(previewAssetUrl);
   }
 
-  const previewUrl = template(parsedStory, previewAssets, { showHeader: true, debug: true });
-  const downloadUrl = template(parsedStory, downloadAssets, { showHeader: true });
+  const previewUrl = template(parsedStory, previewAssets, { debug: true });
+  const downloadUrl = template(parsedStory, downloadAssets);
   urls.push(previewUrl, downloadUrl);
 
   return { previewUrl, downloadUrl, downloadName: `${title}.html`, urls };
