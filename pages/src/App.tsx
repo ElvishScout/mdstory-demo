@@ -287,7 +287,7 @@ export default function App() {
       <header className="shrink-0 h-12 px-4 flex items-center gap-2 bg-slate-900 text-white shadow-md z-10">
         <div className="flex items-center gap-2">
           <img className="w-5 h-5" src="/icon.png" alt="icon" />
-          <h1 className="text-sm font-semibold tracking-wide">MDStory</h1>
+          <h1 className="text-sm font-semibold tracking-wide">MdStory</h1>
         </div>
         <div className="ml-auto flex items-center gap-1">
           <label className="flex items-center gap-1.5 px-2 text-xs text-slate-400">

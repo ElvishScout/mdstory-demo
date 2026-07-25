@@ -29,12 +29,9 @@ export default function HelpDialog({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-8" onClick={onClose}>
       <div
-        className="w-full max-w-2xl max-h-full flex flex-col rounded-xl bg-white shadow-xl"
+        className="w-full max-w-3xl max-h-full flex flex-col rounded-xl bg-white shadow-xl overflow-hidden"
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="shrink-0 px-5 h-12 flex items-center justify-between border-b border-slate-100">
@@ -52,29 +49,28 @@ export default function HelpDialog({ onClose }: { onClose: () => void }) {
         <div className="grow min-h-0 overflow-y-auto px-5 py-4 space-y-6">
           <Section title="This App">
             <p>
-              MDStory is a live editor for <strong>MdStory</strong> interactive stories. Write the story source
-              on the left; the right pane rebuilds a playable preview automatically as you type (the amber dot
-              means a rebuild is pending). <strong>Refresh</strong> forces a rebuild, and{" "}
-              <strong>Export HTML</strong> downloads a standalone story file.
+              This is a live editor for <strong>MdStory</strong> interactive stories. Write the story source on the
+              left; the right pane rebuilds a playable preview automatically as you type (the amber dot means a rebuild
+              is pending). <strong>Refresh</strong> forces a rebuild, and <strong>Export HTML</strong> downloads a
+              standalone story file.
             </p>
             <p>
-              Your work is saved locally in the browser. Use <strong>Save Zip</strong> / <strong>Open Zip</strong>{" "}
-              to export or restore an archive containing the source and all assets.
+              Your work is saved locally in the browser. Use <strong>Save Zip</strong> / <strong>Open Zip</strong> to
+              export or restore an archive containing the source and all assets.
             </p>
             <p>
-              Manage files in the <strong>Assets</strong> panel: upload, double-click an alias to rename it, or
-              delete entries. You can also <strong>drag &amp; drop or paste files directly into the editor</strong>{" "}
-              — each file is added as an asset and <Code>{"{{embed alias}}"}</Code> is inserted at the drop point
-              or cursor.
+              Manage files in the <strong>Assets</strong> panel: upload, double-click an alias to rename it, or delete
+              entries. You can also <strong>drag &amp; drop or paste files directly into the editor</strong> — each file
+              is added as an asset and <Code>{"{{embed alias}}"}</Code> is inserted at the drop point or cursor.
             </p>
           </Section>
 
           <Section title="Document Structure">
             <p>
-              A story is one Markdown file. Headings (<Code>#</Code>, <Code>##</Code>, <Code>###</Code>…) create
-              nested <strong>Sections</strong>; the content between a heading and the next heading is that
-              Section's template. Always give Sections an explicit stable id with <Code>{"{#id}"}</Code> —
-              navigation targets these ids, and ids must be unique among siblings.
+              A story is one Markdown file. Headings (<Code>#</Code>, <Code>##</Code>, <Code>###</Code>…) create nested{" "}
+              <strong>Sections</strong>; the content between a heading and the next heading is that Section's template.
+              Always give Sections an explicit stable id with <Code>{"{#id}"}</Code> — navigation targets these ids, and
+              ids must be unique among siblings.
             </p>
             <Pre>{`---
 title: My Story
@@ -89,24 +85,22 @@ scope:
 
 Scene text…`}</Pre>
             <p>
-              The YAML frontmatter sets the <Code>title</Code>, the root <Code>scope</Code> (global variables),
-              and optional <Code>assets</Code>.
+              The YAML frontmatter sets the <Code>title</Code>, the root <Code>scope</Code> (global variables), and
+              optional <Code>assets</Code>.
             </p>
           </Section>
 
           <Section title="Scope & Hooks">
             <p>
-              Each Section has a layer of <strong>scope</strong>. Reading <Code>scope.key</Code> walks from the
-              current Section up to the root and returns the first match. Writing{" "}
-              <Code>scope.key = value</Code> updates the nearest ancestor that owns the key, otherwise it writes
-              to the current layer.
+              Each Section has a layer of <strong>scope</strong>. Reading <Code>scope.key</Code> walks from the current
+              Section up to the root and returns the first match. Writing <Code>scope.key = value</Code> updates the
+              nearest ancestor that owns the key, otherwise it writes to the current layer.
             </p>
             <p>
-              A Section's <Code>{"<script>"}</Code> tag may export three hooks. On every entry the Section's own
-              scope is reset, then <Code>data()</Code> → <Code>onEnter()</Code> run; state that must survive
-              re-entry belongs in an ancestor or the root scope. Note that values returned by{" "}
-              <Code>data()</Code> always merge into the <em>current</em> layer, even if an ancestor defines the
-              same key.
+              A Section's <Code>{"<script>"}</Code> tag may export three hooks. On every entry the Section's own scope
+              is reset, then <Code>data()</Code> → <Code>onEnter()</Code> run; state that must survive re-entry belongs
+              in an ancestor or the root scope. Note that values returned by <Code>data()</Code> always merge into the{" "}
+              <em>current</em> layer, even if an ancestor defines the same key.
             </p>
             <Pre>{`<script>
 export default {
@@ -129,10 +123,10 @@ export default {
 {{#nav "chapter1.forest"}}Multi-segment path{{/nav}}
 {{#nav null}}The End{{/nav}}`}</Pre>
             <p>
-              Paths resolve as absolute from the root first, then relative to the current Section, then by
-              walking up the ancestors. Use <Code>null</Code> or <Code>""</Code> to end the story. If a Section
-              contains no <Code>{"{{#nav}}"}</Code>, the story advances automatically in depth-first order.
-              Navigating to the current Section re-enters it (scope resets).
+              Paths resolve as absolute from the root first, then relative to the current Section, then by walking up
+              the ancestors. Use <Code>null</Code> or <Code>""</Code> to end the story. If a Section contains no{" "}
+              <Code>{"{{#nav}}"}</Code>, the story advances automatically in depth-first order. Navigating to the
+              current Section re-enters it (scope resets).
             </p>
           </Section>
 
@@ -142,8 +136,8 @@ export default {
 {{input "boolean" brave=false}}`}</Pre>
             <p>
               Inputs are submitted together with the chosen <Code>{"{{#nav}}"}</Code> and written like{" "}
-              <Code>scope.key = value</Code> before <Code>onLeave()</Code> runs, so{" "}
-              <Code>onLeave</Code> can read the latest values.
+              <Code>scope.key = value</Code> before <Code>onLeave()</Code> runs, so <Code>onLeave</Code> can read the
+              latest values.
             </p>
           </Section>
 
@@ -176,8 +170,8 @@ The door is shut tight.
                 <Code>{"{{linebreak N}}"}</Code> — insert N blank lines
               </li>
               <li>
-                <Code>{'{{embed alias label="Caption"}}'}</Code> — render an asset inline (optional{" "}
-                <Code>label</Code>, <Code>width</Code>, <Code>height</Code>)
+                <Code>{'{{embed alias label="Caption"}}'}</Code> — render an asset inline (optional <Code>label</Code>,{" "}
+                <Code>width</Code>, <Code>height</Code>)
               </li>
             </ul>
           </Section>
@@ -195,16 +189,14 @@ The door is shut tight.
 
           <Section title="Include">
             <p>
-              <Code>{'!include("./chapters/intro.md")'}</Code> splices another Markdown file (relative path,
-              absolute path, or URL) into the current position. Includes inside an included file resolve
-              relative to that file.
+              <Code>{'!include("./chapters/intro.md")'}</Code> splices another Markdown file (relative path, absolute
+              path, or URL) into the current position. Includes inside an included file resolve relative to that file.
             </p>
           </Section>
 
           <Section title="Styles">
             <p>
-              A <Code>{"<style>"}</Code> tag belongs to its Section and applies to that Section's rendered
-              output.
+              A <Code>{"<style>"}</Code> tag belongs to its Section and applies to that Section's rendered output.
             </p>
           </Section>
         </div>
