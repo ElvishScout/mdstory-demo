@@ -1,4 +1,15 @@
-import { useRef, useState, useEffect, useCallback, ChangeEvent, KeyboardEvent, SyntheticEvent } from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  ChangeEvent,
+  KeyboardEvent,
+  DragEvent,
+  ClipboardEvent,
+  SyntheticEvent,
+} from "react";
 import { produce } from "immer";
 import { LanguageDescription, LanguageSupport, indentUnit } from "@codemirror/language";
 import { markdown } from "@codemirror/lang-markdown";
@@ -47,7 +58,10 @@ export default function App() {
   const [source, setSource] = useState("");
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [previewError, setPreviewError] = useState("");
-  const [previewStale, setPreviewStale] = useState(true);
+  // Snapshot of what the current preview was built from; the preview is stale
+  // whenever the live source/assets diverge from it (derived, no effect needed).
+  const [builtSnapshot, setBuiltSnapshot] = useState<{ source: string; assets: AssetEntry[] } | null>(null);
+  const previewStale = builtSnapshot === null || builtSnapshot.source !== source || builtSnapshot.assets !== assetList;
 
   const addAssetFiles = (files: File[]): AssetEntry[] => {
     const used = new Set(assetListRef.current.map((entry) => entry.alias));
@@ -84,45 +98,47 @@ export default function App() {
     view.focus();
   };
 
-  const extensions = [
-    theme,
-    highlight,
-    indentUnit.of(" ".repeat(tabSize)),
-    wrapText ? EditorView.lineWrapping : [],
-    EditorView.domEventHandlers({
-      drop(event, view) {
-        const files = Array.from(event.dataTransfer?.files ?? []);
-        if (files.length === 0) {
-          return;
-        }
-        event.preventDefault();
-        insertAssetEmbeds(files, view.posAtCoords({ x: event.clientX, y: event.clientY }));
-        return true;
-      },
-      paste(event, view) {
-        const files = Array.from(event.clipboardData?.files ?? []);
-        if (files.length === 0) {
-          return;
-        }
-        event.preventDefault();
-        insertAssetEmbeds(files, view.state.selection.main.head);
-        return true;
-      },
-    }),
-    yamlFrontmatter({
-      content: markdown({
-        codeLanguages: [
-          LanguageDescription.of({
-            name: "javascript",
-            alias: ["js"],
-            extensions: [".js", ".cjs", ".mjs"],
-            support: new LanguageSupport(javascriptLanguage),
-          }),
-        ],
-        extensions: [markdownHandlebars],
+  const handleEditorDrop = (ev: DragEvent<HTMLDivElement>) => {
+    const files = Array.from(ev.dataTransfer?.files ?? []);
+    const view = viewRef.current;
+    if (files.length === 0 || !view) {
+      return;
+    }
+    ev.preventDefault();
+    insertAssetEmbeds(files, view.posAtCoords({ x: ev.clientX, y: ev.clientY }));
+  };
+
+  const handleEditorPaste = (ev: ClipboardEvent<HTMLDivElement>) => {
+    const files = Array.from(ev.clipboardData?.files ?? []);
+    if (files.length === 0) {
+      return;
+    }
+    ev.preventDefault();
+    insertAssetEmbeds(files, null);
+  };
+
+  const extensions = useMemo(
+    () => [
+      theme,
+      highlight,
+      indentUnit.of(" ".repeat(tabSize)),
+      wrapText ? EditorView.lineWrapping : [],
+      yamlFrontmatter({
+        content: markdown({
+          codeLanguages: [
+            LanguageDescription.of({
+              name: "javascript",
+              alias: ["js"],
+              extensions: [".js", ".cjs", ".mjs"],
+              support: new LanguageSupport(javascriptLanguage),
+            }),
+          ],
+          extensions: [markdownHandlebars],
+        }),
       }),
-    }),
-  ];
+    ],
+    [tabSize, wrapText],
+  );
 
   useEffect(() => {
     load().then(({ source: stored, fileAssets }) => {
@@ -147,18 +163,23 @@ export default function App() {
 
   const refreshPreview = useCallback(async () => {
     const seq = ++buildSeq.current;
-    const fileAssets = Object.fromEntries(assetList.map(({ alias, file }) => [alias, file]));
+    const source = sourceRef.current;
+    const assets = assetListRef.current;
+    const fileAssets = Object.fromEntries(assets.map(({ alias, file }) => [alias, file]));
 
-    if (sourceRef.current.trim() === "") {
-      setPreview(null);
+    if (source.trim() === "") {
+      setPreview((old) => {
+        old?.dispose();
+        return null;
+      });
       setPreviewError("");
-      setPreviewStale(false);
-      void save({ source: sourceRef.current, fileAssets });
+      setBuiltSnapshot({ source, assets });
+      void save({ source, fileAssets });
       return;
     }
 
     try {
-      const result = await buildPreview(sourceRef.current, fileAssets);
+      const result = await buildPreview(source, fileAssets);
       if (seq !== buildSeq.current) {
         result.dispose();
         return;
@@ -174,15 +195,14 @@ export default function App() {
       }
     } finally {
       if (seq === buildSeq.current) {
-        setPreviewStale(false);
+        setBuiltSnapshot({ source, assets });
       }
     }
-    void save({ source: sourceRef.current, fileAssets });
-  }, [assetList]);
+    void save({ source, fileAssets });
+  }, []);
 
   // Rebuild the preview (debounced) whenever the source or assets change.
   useEffect(() => {
-    setPreviewStale(true);
     const timer = setTimeout(() => void refreshPreview(), 800);
     return () => clearTimeout(timer);
   }, [source, assetList, refreshPreview]);
@@ -338,7 +358,11 @@ export default function App() {
               Assets ({assetList.length}) {assetsOpen ? "▾" : "▸"}
             </button>
           </div>
-          <div className="relative grow min-h-0 mx-3 mb-3 rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden text-sm">
+          <div
+            className="relative grow min-h-0 mx-3 mb-3 rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden text-sm"
+            onDropCapture={handleEditorDrop}
+            onPasteCapture={handleEditorPaste}
+          >
             <CodeMirror
               className="w-full h-full"
               width="100%"
